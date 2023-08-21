@@ -2150,4 +2150,43 @@ def create_umap_scatter(umap_cluster_dataframe,
         plt.scatter(x, y, color=color, alpha=opacity, marker=marker_type)
 
     return marker_color_list                             
-                             
+
+def update_scatter_ax(ax,
+                      umap_cluster_dataframe,
+                      scatter_plot_dict):
+    """
+    Docstring
+    """
+    # Extract scatter points
+    x_val = umap_cluster_dataframe['X']
+    y_val = umap_cluster_dataframe['Y']
+    
+    # Set up marker color
+    color_column = list(scatter_plot_dict['marker_colors'])[0]
+    marker_color_list = [
+        sns.color_palette(
+            scatter_plot_dict['marker_colors'][color_column][marker_value][0],
+            scatter_plot_dict['marker_colors'][color_column][marker_value][1]
+        )[scatter_plot_dict['marker_colors'][color_column][marker_value][2]]
+        for marker_value in umap_cluster_dataframe[color_column]
+    ]
+    
+    # Set up marker opacity
+    opacity_column = list(scatter_plot_dict['marker_opacity'])[0]
+    opacity_list = [
+        scatter_plot_dict['marker_opacity'][opacity_column][marker_value]
+        for marker_value in umap_cluster_dataframe[opacity_column]
+    ]
+    
+    # Set up marker type
+    marker_type_column = list(scatter_plot_dict['marker_type'])[0]
+    marker_type_list = [
+        scatter_plot_dict['marker_type'][marker_type_column][marker_value]
+        for marker_value in umap_cluster_dataframe[marker_type_column]
+    ]
+    
+    # Iterate over points to make the plot
+    for x, y, color, opacity, marker_type in zip(x_val, y_val, marker_color_list, opacity_list, marker_type_list):
+        ax.scatter(x, y, color=color, alpha=opacity, marker=marker_type)
+    
+    return ax        
