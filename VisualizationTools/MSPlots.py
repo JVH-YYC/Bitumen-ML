@@ -2189,4 +2189,6 @@ def update_scatter_ax(ax,
     for x, y, color, opacity, marker_type in zip(x_val, y_val, marker_color_list, opacity_list, marker_type_list):
         ax.scatter(x, y, color=color, alpha=opacity, marker=marker_type)
     
-    return ax        
+    return ax
+
+        

@@ -5,7 +5,7 @@ Created on Tue May 30 11:24:30 2023
 
 @author: jvh
 """
-
+import VisualizationTools.UMAPPlots as UMP
 import VisualizationTools.MSPlots as MSP
 import torch.nn as nn
 

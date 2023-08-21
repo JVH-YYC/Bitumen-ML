@@ -130,6 +130,24 @@ def parse_range_list(ordered_list,
     # Return the list of column names
     return column_names
 
+def reshape_compound_class_data(excel_file_directory,
+                                excel_file_name,
+                                csv_output_name):
+     # Build the full file path for the Excel file
+    excel_file_path = f"{excel_file_directory}/{excel_file_name}"
+    
+    # Read the Excel file into a DataFrame, only fetching columns 'Name', 'Class', and 'Normalized Intensity'
+    df = pd.read_excel(excel_file_path, usecols=['Name', 'Class', 'Normalized Intensity'])
+    
+    # Pivot the DataFrame
+    df_pivot = df.pivot(index='Name', columns='Class', values='Normalized Intensity').fillna(0.0)
+    
+    # Save the reshaped DataFrame as a CSV file in the same directory
+    csv_file_path = f"{excel_file_directory}/{csv_output_name}"
+    df_pivot.to_csv(csv_file_path)
+
+    return
+
 # csv_file_directory='ExpCSV/Clustering/'
 # csv_file_name='Just Avg for Clustering No SM.csv'
 # ordered_target_column_list=['Label_0', 'Label_1', 'Label_2']
