@@ -617,9 +617,7 @@ cfgc_publication_scatter_plot_dict = {'plot_width': 3.5,
                       'xmin': -0.1,
                       'xmax': 0.1,
                       'ymin': -0.1,
-                      'ymax': 0.1,
-                      'save_output': True,
-                      'output_name': 'Scatter Comparison'}
+                      'ymax': 0.1}
 
 cfgc_publication_multi_UMAP_dict = {'plot_width': 3.5,
                                     'plot_height': 6.0,
@@ -644,7 +642,7 @@ cfgc_publication_multi_UMAP_dict = {'plot_width': 3.5,
                                     'font_size': 8,
                                     'save_output': True}
 
-cfgc_publication_UMAP_cluster_dict_ML = {'ordered_target_column_list': ['Label_5',],
+cfgc_publication_ML_cluster_dict = {'ordered_target_column_list': ['Label_5',],
                                          'target_mode': 'exact',
                                          'ordered_data_column_list': ['7-29',],
                                          'data_mode': 'range',
@@ -658,6 +656,8 @@ cfgc_publication_compound_class_cluster_dict = {'ordered_target_column_list': ['
                                                 'csv_file_directory': './Clustering',
                                                 'csv_file_name': 'compound_class_cluster.csv'}
 
+cfgc_publication_multiscatter_data_list = [cfgc_publication_compoud_class_cluster_dict,
+                                           cfgc_publication_ML_cluster_dict]
 
-
+cfgc_publication_umap_scatter_dict = []
 

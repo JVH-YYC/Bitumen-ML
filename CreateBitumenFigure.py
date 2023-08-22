@@ -7,6 +7,7 @@ Created on Tue May 30 11:24:30 2023
 """
 import VisualizationTools.UMAPPlots as UMP
 import VisualizationTools.MSPlots as MSP
+import VisualizationTools.visualization_settings as VS
 import torch.nn as nn
 
 # dataset_param_dict = {'sm_file_directory': 'ExpCSV/SM_nar',
@@ -66,4 +67,5 @@ import torch.nn as nn
 #                       'condition_dict': committee_condition_dict,
 #                       'pickle_file': False,
 #                       'output_name': 'placeholder'}
+
 

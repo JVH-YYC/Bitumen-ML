@@ -2064,9 +2064,7 @@ def compare_mse_for_scatters(list_of_pickle_dict):
     
     return
 
-def create_umap_cluster_frame(csv_file_directory,
-                              csv_file_name,
-                              umap_cluster_dict,
+def create_umap_cluster_frame(umap_cluster_dict,
                               n_neighbors,
                               min_dist):
     """
@@ -2087,8 +2085,8 @@ def create_umap_cluster_frame(csv_file_directory,
 
     """
 
-    cluster_data_frame = UMP.import_csv_and_craft(csv_file_directory,
-                                                  csv_file_name,
+    cluster_data_frame = UMP.import_csv_and_craft(umap_cluster_dict['csv_file_directory'],
+                                                  umap_cluster_dict['csv_file_name'],
                                                   umap_cluster_dict['target_column_list'],
                                                   umap_cluster_dict['data_column_list'],
                                                   umap_cluster_dict['target_mode'],
@@ -2155,7 +2153,7 @@ def create_umap_scatter(umap_cluster_dataframe,
 
 def update_scatter_ax(ax,
                       umap_cluster_dataframe,
-                      scatter_plot_dict):
+                      umap_scatter_dict):
     """
     Docstring
     """
@@ -2164,26 +2162,26 @@ def update_scatter_ax(ax,
     y_val = umap_cluster_dataframe['Y']
     
     # Set up marker color
-    color_column = list(scatter_plot_dict['marker_colors'])[0]
+    color_column = list(umap_scatter_dict['marker_colors'])[0]
     marker_color_list = [
         sns.color_palette(
-            scatter_plot_dict['marker_colors'][color_column][marker_value][0],
-            scatter_plot_dict['marker_colors'][color_column][marker_value][1]
+            umap_scatter_dict['marker_colors'][color_column][marker_value][0],
+            umap_scatter_dict['marker_colors'][color_column][marker_value][1]
         )[scatter_plot_dict['marker_colors'][color_column][marker_value][2]]
         for marker_value in umap_cluster_dataframe[color_column]
     ]
     
     # Set up marker opacity
-    opacity_column = list(scatter_plot_dict['marker_opacity'])[0]
+    opacity_column = list(umap_scatter_dict['marker_opacity'])[0]
     opacity_list = [
-        scatter_plot_dict['marker_opacity'][opacity_column][marker_value]
+        umap_scatter_dict['marker_opacity'][opacity_column][marker_value]
         for marker_value in umap_cluster_dataframe[opacity_column]
     ]
     
     # Set up marker type
-    marker_type_column = list(scatter_plot_dict['marker_type'])[0]
+    marker_type_column = list(umap_scatter_dict['marker_type'])[0]
     marker_type_list = [
-        scatter_plot_dict['marker_type'][marker_type_column][marker_value]
+        umap_scatter_dict['marker_type'][marker_type_column][marker_value]
         for marker_value in umap_cluster_dataframe[marker_type_column]
     ]
     
