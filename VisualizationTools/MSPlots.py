@@ -2175,7 +2175,6 @@ def update_scatter_ax(ax,
     x_val = umap_cluster_dataframe['X']
     y_val = umap_cluster_dataframe['Y']
     
-    print(umap_cluster_dataframe)
     # Set up marker color
     color_column = list(umap_scatter_dict['marker_colors'])[0]
     marker_color_list = [
@@ -2217,7 +2216,8 @@ def create_multiple_UMAP_scatter(multi_scatter_plot_dict,
     fig, multi_ax = plt.subplots(nrows=multi_scatter_plot_dict['num_rows'],
                                  ncols=multi_scatter_plot_dict['num_columns'],
                                  figsize=(multi_scatter_plot_dict['plot_width'],
-                                          multi_scatter_plot_dict['plot_height']))
+                                          multi_scatter_plot_dict['plot_height']),
+                                          gridspec_kw={'wspace': 0, 'hspace': 0})
     
     for i, ax_row in enumerate(multi_ax):
         for j, ax in enumerate(ax_row):
@@ -2232,19 +2232,21 @@ def create_multiple_UMAP_scatter(multi_scatter_plot_dict,
             
             #Add row title at first column
             if j == 0:
-                ax.set_title(multi_scatter_plot_dict['list_of_row_labels'][i], loc='left')
+                ax.annotate(multi_scatter_plot_dict['list_of_row_labels'][i],
+                            xy=(0, 0.5),
+                            xycoords=ax.yaxis.label,
+                            textcoords='offset points',
+                            ha='right', va='center')
             
             #Add column title at top row
             if i == 0:
                 ax.set_title(multi_scatter_plot_dict['list_of_column_labels'][j], loc='center')
             
-            #Remove x-axis labels for all but bottom row
-            if i != multi_scatter_plot_dict['num_rows'] - 1:
-                ax.set_xticklabels([])
-
-            #Remove y-axis labels for all but left column
-            if j != 0:
-                ax.set_yticklabels([])
+            #Remove all axis tick-marks and labels
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.set_xticklabels([])
+            ax.set_yticklabels([])
             
     #If output_file_name is not none, save the plot as a .png file with output_file_name.png
     if output_file_name != None:
