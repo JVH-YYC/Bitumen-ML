@@ -2155,7 +2155,21 @@ def update_scatter_ax(ax,
                       umap_cluster_dataframe,
                       umap_scatter_dict):
     """
-    Docstring
+    The umap_scatter_dict needs to have the following structure:
+        The key 'marker_colors' should map to a dictionary, whose keys correspond to the column names
+        that you're using to define the colors. Each of these inner keys should then map to another
+        dictionary that assigns each unique value in the column to a list of 3 elements:
+        The Seaborn palette name (e.g., 'husl')
+        The number of shades in the palette
+        The index for which shade to choose in the palette
+
+    The key 'marker_opacity' should similarly map to a dictionary.
+    The inner keys should map to the unique values in the corresponding DataFrame column
+    and set an opacity value (between 0 and 1) for each unique value.
+
+    The key 'marker_type' follows the same pattern, mapping to a dictionary
+    whose inner keys correspond to the unique values in a DataFrame column.
+    Each inner key should map to a marker type (e.g., 'o', 's', 'x', etc.)
     """
     # Extract scatter points
     x_val = umap_cluster_dataframe['X']
@@ -2167,7 +2181,7 @@ def update_scatter_ax(ax,
         sns.color_palette(
             umap_scatter_dict['marker_colors'][color_column][marker_value][0],
             umap_scatter_dict['marker_colors'][color_column][marker_value][1]
-        )[scatter_plot_dict['marker_colors'][color_column][marker_value][2]]
+        )[umap_scatter_dict['marker_colors'][color_column][marker_value][2]]
         for marker_value in umap_cluster_dataframe[color_column]
     ]
     
