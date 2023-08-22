@@ -2206,11 +2206,51 @@ def update_scatter_ax(ax,
     return ax
 
 def create_multiple_UMAP_scatter(multi_scatter_plot_dict,
+                                 umap_scatter_dict,
                                  list_of_cluster_targets,
                                  output_file_name):
     """
     Docstring
     """
+    # Create the figure and axes
+    fig, multi_ax = plt.subplots(nrows=multi_scatter_plot_dict['num_rows'],
+                                 ncols=multi_scatter_plot_dict['num_columns'],
+                                 figsize=(multi_scatter_plot_dict['plot_width'],
+                                          multi_scatter_plot_dict['plot_height']))
+    
+    for i, ax_row in enumerate(multi_ax):
+        for j, ax in enumerate(ax_row):
+            #Create individual scatter plot by updating ax
+            cluster_frame = create_umap_cluster_frame(list_of_cluster_targets[j],
+                                                      multi_scatter_plot_dict['list_of_UMAP_settings'][i]['n_neighbors'],
+                                                      multi_scatter_plot_dict['list_of_UMAP_settings'][i]['min_dist'])
+            
+            ax = update_scatter_ax(ax,
+                                   cluster_frame,
+                                   umap_scatter_dict)
+            
+            #Add row title at first column
+            if j == 0:
+                ax.set_title(multi_scatter_plot_dict['list_of_row_labels'][i], loc='left')
+            
+            #Add column title at top row
+            if i == 0:
+                ax.set_title(multi_scatter_plot_dict['list_of_column_labels'][j], loc='center')
+            
+            #Remove x-axis labels for all but bottom row
+            if i != multi_scatter_plot_dict['num_rows'] - 1:
+                ax.set_xticklabels([])
 
+            #Remove y-axis labels for all but left column
+            if j != 0:
+                ax.set_yticklabels([])
+            
+    #If output_file_name is not none, save the plot as a .png file with output_file_name.png
+    if output_file_name != None:
+        plt.savefig(output_file_name + '.png', dpi=300, bbox_inches='tight')
+    
+    return
+
+                                    
     return
 

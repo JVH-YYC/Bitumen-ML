@@ -659,5 +659,12 @@ cfgc_publication_compound_class_cluster_dict = {'ordered_target_column_list': ['
 cfgc_publication_multiscatter_data_list = [cfgc_publication_compoud_class_cluster_dict,
                                            cfgc_publication_ML_cluster_dict]
 
-cfgc_publication_umap_scatter_dict = []
+cfgc_publication_umap_scatter_dict = {'marker_colors': {'Label_0': {'L1': ['Oranges', 5, 3],
+                                                                    'S2': ['Blues', 5, 3]}},
+                                      'marker_opacity': {'Label_1': {'toluene': 0.75,
+                                                                     'DCM': 0.25}},
+                                      'marker_type': {'Label_2': {'AcOH': 'o',
+                                                                  'acetone': 's',
+                                                                  'iPrOH': 'x',
+                                                                  'NEt3': 'd'}}}
 
