@@ -2066,7 +2066,9 @@ def compare_mse_for_scatters(list_of_pickle_dict):
 
 def create_umap_cluster_frame(csv_file_directory,
                               csv_file_name,
-                              umap_cluster_dict):
+                              umap_cluster_dict,
+                              n_neighbors,
+                              min_dist):
     """
     
 
@@ -2092,8 +2094,8 @@ def create_umap_cluster_frame(csv_file_directory,
                                                   umap_cluster_dict['target_mode'],
                                                   umap_cluster_dict['data_mode'])
     
-    reducer = umap.UMAP(n_neighbors=umap_cluster_dict['umap_n_neighbors'],
-                        min_dist=umap_cluster_dict['umap_min_dist'])
+    reducer = umap.UMAP(n_neighbors=n_neighbors,
+                        min_dist=min_dist)
     
     #Remove labels from dataframe
     data_only_frame = cluster_data_frame.drop(columns=[col for col in cluster_data_frame.columns if col in umap_cluster_dict['target_column_list']])
@@ -2191,4 +2193,12 @@ def update_scatter_ax(ax,
     
     return ax
 
-        
+def create_multiple_UMAP_scatter(multi_scatter_plot_dict,
+                                 list_of_cluster_targets,
+                                 output_file_name):
+    """
+    Docstring
+    """
+
+    return
+

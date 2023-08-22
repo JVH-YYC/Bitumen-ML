@@ -39,7 +39,6 @@ import torch.nn as nn
 #                                      hrms_plot_dict=hrms_plot_dict,
 #                                      difference_mode='raw')
 
-
 # MSP.single_predact_plot_from_pickle(pickle_file_directory_list=['S1 PredAct Pickles/']*4,
 #                                     pickle_file_name_list=['20060_20061_pair_ML_predact.pkl',
 #                                                            '20062_20063_pair_ML_predact.pkl',
@@ -55,27 +54,6 @@ import torch.nn as nn
 # MSP.single_ppe_violin_plot_from_pickle(pickle_file_directory_list=predact_combined_dir_list,
 #                                         pickle_file_name_list=pers_ppe_list,
 #                                         violin_plot_dict=violin_plot_dict)
-
-# for entry in [20061, 20063, 20065, 20067]:
-#     file_label = str(entry) + '_nar.csv'
-#     output_name = str(entry) + '_split_by_committee'
-#     dataset_param_dict = {'sm_file_directory': 'ExpCSV/S1P2 SM',
-#                           'ext_file_directory': 'ExpCSV/S1P2 Split Ext',
-#                           'label_keys': committee_label_keys,
-#                           'test_list': [file_label,],
-#                           'locked_formula': locked_formula,
-#                           'condition_dict': committee_condition_dict,
-#                           'pickle_file': False,
-#                           'output_name': 'placeholder'}
-#     MSP.calc_and_save_ml_by_committee(trained_net_directory=committee_trained_net_directory,
-#                                       trained_net_name_list=committee_trained_net_list_d11,
-#                                       trained_net_param_dict=network_param_dict,
-#                                       dataset_param_dict=dataset_param_dict,
-#                                       file_to_test=file_label,
-#                                       difference_mode='absolute',
-#                                       output_name=output_name,
-#                                       dataset_pass=None)
-
     
 # long_combined_dataframe = MSP.multiple_ppe_violin_plot_from_pickle(list_of_pickle_dict=list_of_pickle_dict,
 #                                           violin_plot_dict=violin_plot_dict)
@@ -88,65 +66,4 @@ import torch.nn as nn
 #                       'condition_dict': committee_condition_dict,
 #                       'pickle_file': False,
 #                       'output_name': 'placeholder'}
-
-# MSP.calc_cfgc_SM_only_difference(dataset_param_dict=dataset_param_dict,
-#                                   paired_files_to_test=['20062_nar.csv', '20063_nar.csv'],
-#                                   paired_file_names=['20062', '20063'],
-#                                   paired_sm_labels=['S1P1', 'S1P2'],
-#                                   difference_mode='raw',
-#                                   output_name='20062_20063_pair_SM_only',
-#                                   dataset_pass=None)
-
-# dataset_param_dict = {'sm_file_directory': 'ExpCSV/S1_SM_folder',
-#                       'ext_file_directory': 'ExpCSV/S1_ext_folder',
-#                       'label_keys': committee_label_keys,
-#                       'test_list': ['20064_nar.csv', '20065_nar.csv'],
-#                       'locked_formula': locked_formula,
-#                       'condition_dict': committee_condition_dict,
-#                       'pickle_file': False,
-#                       'output_name': 'placeholder'}
-
-# MSP.calc_cfgc_SM_only_difference(dataset_param_dict=dataset_param_dict,
-#                                   paired_files_to_test=['20064_nar.csv', '20065_nar.csv'],
-#                                   paired_file_names=['20064', '20065'],
-#                                   paired_sm_labels=['S1P1', 'S1P2'],
-#                                   difference_mode='raw',
-#                                   output_name='20064_20065_pair_SM_only',
-#                                   dataset_pass=None)
-
-# dataset_param_dict = {'sm_file_directory': 'ExpCSV/S1_SM_folder',
-#                       'ext_file_directory': 'ExpCSV/S1_ext_folder',
-#                       'label_keys': committee_label_keys,
-#                       'test_list': ['20066_nar.csv', '20067_nar.csv'],
-#                       'locked_formula': locked_formula,
-#                       'condition_dict': committee_condition_dict,
-#                       'pickle_file': False,
-#                       'output_name': 'placeholder'}
-
-# MSP.calc_cfgc_SM_only_difference(dataset_param_dict=dataset_param_dict,
-#                                   paired_files_to_test=['20066_nar.csv', '20067_nar.csv'],
-#                                   paired_file_names=['20066', '20067'],
-#                                   paired_sm_labels=['S1P1', 'S1P2'],
-#                                   difference_mode='raw',
-#                                   output_name='20066_20067_pair_SM_only',
-#                                   dataset_pass=None)
-
-# dataset_param_dict = {'sm_file_directory': 'ExpCSV/S1_SM_folder',
-#                       'ext_file_directory': 'ExpCSV/S1_ext_folder',
-#                       'label_keys': committee_label_keys,
-#                       'test_list': ['20060_nar.csv', '20061_nar.csv'],
-#                       'locked_formula': locked_formula,
-#                       'condition_dict': committee_condition_dict,
-#                       'pickle_file': False,
-#                       'output_name': 'placeholder'}
-
-# MSP.calc_cfgc_SM_only_difference(dataset_param_dict=dataset_param_dict,
-#                                   paired_files_to_test=['20060_nar.csv', '20061_nar.csv'],
-#                                   paired_file_names=['20060', '20061'],
-#                                   paired_sm_labels=['S1P1', 'S1P2'],
-#                                   difference_mode='raw',
-#                                   output_name='20060_20061_pair_SM_only',
-#                                   dataset_pass=None)
-
-
 

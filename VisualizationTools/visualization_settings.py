@@ -620,3 +620,44 @@ cfgc_publication_scatter_plot_dict = {'plot_width': 3.5,
                       'ymax': 0.1,
                       'save_output': True,
                       'output_name': 'Scatter Comparison'}
+
+cfgc_publication_multi_UMAP_dict = {'plot_width': 3.5,
+                                    'plot_height': 6.0,
+                                    'palette': 'Oranges',
+                                    'num_shades': 5,
+                                    'shade_choice': 3,
+                                    'opacity': 0.5,
+                                    'point_size': 0.25,
+                                    'list_of_row_labels': ['N = 3, D = 0.1',
+                                                           'N = 9, D = 0.5',
+                                                           'N = 15, D = 0.9'],
+                                    'list_of_UMAP_settings': [{'n_neighbors': 3,
+                                                               'min_dist': 0.1,},
+                                                                {'n_neighbors': 9,
+                                                                    'min_dist': 0.5,},
+                                                                {'n_neighbors': 15,
+                                                                    'min_dist': 0.9,},],
+                                    'list_of_column_labels': ['Compound Class', 'ML Character'],
+                                    'num_rows': 3,
+                                    'num_columns': 2,
+                                    'font_type': 'FreeSans',
+                                    'font_size': 8,
+                                    'save_output': True}
+
+cfgc_publication_UMAP_cluster_dict_ML = {'ordered_target_column_list': ['Label_5',],
+                                         'target_mode': 'exact',
+                                         'ordered_data_column_list': ['7-29',],
+                                         'data_mode': 'range',
+                                         'csv_file_directory': './Clustering',
+                                         'csv_file_name': 'ML_information_gain_cluster.csv'}
+
+cfgc_publication_compound_class_cluster_dict = {'ordered_target_column_list': ['Label_5',],
+                                                'target_mode': 'exact',
+                                                'ordered_data_column_list': ['7-28',],
+                                                'data_mode': 'range',
+                                                'csv_file_directory': './Clustering',
+                                                'csv_file_name': 'compound_class_cluster.csv'}
+
+
+
+
