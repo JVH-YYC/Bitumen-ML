@@ -1,6 +1,8 @@
 #A landing place for all visualization setting dictionaries
 #And other compiled settings
 
+import torch.nn as nn
+
 cfgc_bitumen_label_keys = {'L1_SM': 'L1_SM',
                            'S2_SM': 'S2_SM',
                            '19208': 'S2',
@@ -510,7 +512,7 @@ cfgc_comb_ML_file_list = ['19208_ML_ppe.pkl',
                      '19243_ML_ppe.pkl',]
 
 cfgc_split_ML_dir_list = ['Split D11 Pickles/',] * 35
-scfgc_plit_ML_file_list = ['19208_split_ML_ppe.pkl',
+cfgc_split_ML_file_list = ['19208_split_ML_ppe.pkl',
                      '19209_split_ML_ppe.pkl',
                      '19210_split_ML_ppe.pkl',
                      '19211_split_ML_ppe.pkl',
@@ -567,32 +569,32 @@ split_s1_ML_file_list = ['20060_split_by_committee_ppe.pkl',
                          '20067_split_by_committee_ppe.pkl',]
 
 cfgc_publication_list_of_pickle_dict = [{'title': 'Persist',
-                        'directory_list': persistence_dir_list,
-                        'file_list': persistence_file_list,
+                        'directory_list': cfgc_persistence_dir_list,
+                        'file_list': cfgc_persistence_file_list,
                         'palette': 'Blues',
                         'num_shades': 5,
                         'shade_choice': 3,},
                        {'title': 'Comb Avg',
-                                               'directory_list': average_dir_list,
-                                               'file_list': average_file_list,
+                                               'directory_list': cfgc_average_dir_list,
+                                               'file_list': cfgc_average_file_list,
                                                'palette': 'Oranges',
                                                'num_shades': 5,
                                                'shade_choice': 3,},
                        {'title': 'Split Avg',
-                        'directory_list': split_avg_dir_list,
-                        'file_list': split_avg_file_list,
+                        'directory_list': cfgc_split_avg_dir_list,
+                        'file_list': cfgc_split_avg_file_list,
                         'palette': 'Blues',
                         'num_shades': 5,
                         'shade_choice': 3},
                        {'title': 'Comb ML',
-                                               'directory_list': comb_ML_dir_list,
-                                               'file_list': comb_ML_file_list,
+                                               'directory_list': cfgc_comb_ML_dir_list,
+                                               'file_list': cfgc_comb_ML_file_list,
                                                'palette': 'Oranges',
                                                'num_shades': 5,
                                                'shade_choice': 3,},
                        {'title': 'Split ML',
-                                               'directory_list': split_ML_dir_list,
-                                               'file_list': split_ML_file_list,
+                                               'directory_list': cfgc_split_ML_dir_list,
+                                               'file_list': cfgc_split_ML_file_list,
                                                'palette': 'Blues',
                                                'num_shades': 5,
                                                'shade_choice': 3,},
@@ -642,21 +644,25 @@ cfgc_publication_multi_UMAP_dict = {'plot_width': 3.5,
                                     'font_size': 8,
                                     'save_output': True}
 
-cfgc_publication_ML_cluster_dict = {'ordered_target_column_list': ['Label_5',],
+cfgc_publication_ML_cluster_dict = {'target_column_list': ['Label_0',
+                                                           'Label_1',
+                                                           'Label_2'],
                                          'target_mode': 'exact',
-                                         'ordered_data_column_list': ['7-29',],
+                                         'data_column_list': ['7-29',],
                                          'data_mode': 'range',
-                                         'csv_file_directory': './Clustering',
+                                         'csv_file_directory': './Clustering/',
                                          'csv_file_name': 'ML_information_gain_cluster.csv'}
 
-cfgc_publication_compound_class_cluster_dict = {'ordered_target_column_list': ['Label_5',],
+cfgc_publication_compound_class_cluster_dict = {'target_column_list': ['Label_0',
+                                                                       'Label_1',
+                                                                       'Label_2'],
                                                 'target_mode': 'exact',
-                                                'ordered_data_column_list': ['7-28',],
+                                                'data_column_list': ['7-28',],
                                                 'data_mode': 'range',
-                                                'csv_file_directory': './Clustering',
+                                                'csv_file_directory': './Clustering/',
                                                 'csv_file_name': 'compound_class_cluster.csv'}
 
-cfgc_publication_multiscatter_data_list = [cfgc_publication_compoud_class_cluster_dict,
+cfgc_publication_multiscatter_data_list = [cfgc_publication_compound_class_cluster_dict,
                                            cfgc_publication_ML_cluster_dict]
 
 cfgc_publication_umap_scatter_dict = {'marker_colors': {'Label_0': {'L1': ['Oranges', 5, 3],

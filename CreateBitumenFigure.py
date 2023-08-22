@@ -12,7 +12,7 @@ import torch.nn as nn
 
 MSP.create_multiple_UMAP_scatter(multi_scatter_plot_dict = VS.cfgc_publication_multi_UMAP_dict,
                                  umap_scatter_dict = VS.cfgc_publication_umap_scatter_dict,
-                                 list_of_cluster_targets = VS.fgc_publication_multiscatter_data_list,
+                                 list_of_cluster_targets = VS.cfgc_publication_multiscatter_data_list,
                                  output_file_name = 'test_multiscatter')
 
 # dataset_param_dict = {'sm_file_directory': 'ExpCSV/SM_nar',

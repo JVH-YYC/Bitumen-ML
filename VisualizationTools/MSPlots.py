@@ -2175,6 +2175,7 @@ def update_scatter_ax(ax,
     x_val = umap_cluster_dataframe['X']
     y_val = umap_cluster_dataframe['Y']
     
+    print(umap_cluster_dataframe)
     # Set up marker color
     color_column = list(umap_scatter_dict['marker_colors'])[0]
     marker_color_list = [
