@@ -15,6 +15,11 @@ MSP.create_multiple_UMAP_scatter(multi_scatter_plot_dict = VS.cfgc_publication_m
                                  list_of_cluster_targets = VS.cfgc_publication_multiscatter_data_list,
                                  output_file_name = 'test_multiscatter')
 
+# MSP.create_consistent_multiUMAP_scatter(multi_scatter_plot_dict = VS.cfgc_publication_multi_UMAP_dict,
+#                                        umap_scatter_dict = VS.cfgc_publication_umap_scatter_dict,
+#                                        nested_multiscatter_dict = VS.cfgc_publication_test_multiscatter,
+#                                        list_of_cluster_targets = VS.cfgc_publication_multiscatter_data_list)
+
 # dataset_param_dict = {'sm_file_directory': 'ExpCSV/SM_nar',
 #                       'ext_file_directory': 'ExpCSV/working_ext',
 #                       'label_keys': label_keys,
