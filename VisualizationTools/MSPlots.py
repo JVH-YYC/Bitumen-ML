@@ -2065,6 +2065,7 @@ def compare_mse_for_scatters(list_of_pickle_dict):
     return
 
 def create_umap_cluster_frame(umap_cluster_dict,
+                              umap_constant_settings,
                               n_neighbors,
                               min_dist):
     """
@@ -2092,7 +2093,8 @@ def create_umap_cluster_frame(umap_cluster_dict,
                                                   umap_cluster_dict['target_mode'],
                                                   umap_cluster_dict['data_mode'])
     
-    reducer = umap.UMAP(n_neighbors=n_neighbors,
+    reducer = umap.UMAP(**umap_constant_settings,
+                        n_neighbors=n_neighbors,
                         min_dist=min_dist)
     
     #Remove labels from dataframe
@@ -2207,6 +2209,7 @@ def update_scatter_ax(ax,
 
 def create_multiple_UMAP_scatter(multi_scatter_plot_dict,
                                  umap_scatter_dict,
+                                 constant_umap_settings,
                                  list_of_cluster_targets,
                                  output_file_name):
     """
@@ -2223,6 +2226,7 @@ def create_multiple_UMAP_scatter(multi_scatter_plot_dict,
         for j, ax in enumerate(ax_row):
             #Create individual scatter plot by updating ax
             cluster_frame = create_umap_cluster_frame(list_of_cluster_targets[j],
+                                                      constant_umap_settings,
                                                       multi_scatter_plot_dict['list_of_UMAP_settings'][i]['n_neighbors'],
                                                       multi_scatter_plot_dict['list_of_UMAP_settings'][i]['min_dist'])
             
@@ -2257,6 +2261,7 @@ def create_multiple_UMAP_scatter(multi_scatter_plot_dict,
 
 def create_consistent_multiUMAP_scatter(multi_scatter_plot_dict,
                                         umap_scatter_dict,
+                                        constant_umap_settings,
                                         nested_multiscatter_dict,
                                         list_of_cluster_targets):
     """
@@ -2276,6 +2281,7 @@ def create_consistent_multiUMAP_scatter(multi_scatter_plot_dict,
     for i, ax_row in enumerate(multi_ax):
         for j, ax in enumerate(ax_row):
             cluster_frame = create_umap_cluster_frame(list_of_cluster_targets[j],
+                                                      constant_umap_settings,
                                                       multi_scatter_plot_dict['list_of_UMAP_settings'][i]['n_neighbors'],
                                                       multi_scatter_plot_dict['list_of_UMAP_settings'][i]['min_dist'])
 
@@ -2315,7 +2321,10 @@ def create_consistent_multiUMAP_scatter(multi_scatter_plot_dict,
                 ax.set_yticks([])
                 ax.set_xticklabels([])
                 ax.set_yticklabels([])
-            
+        
+        #Set full figure background as white
+        fig.patch.set_facecolor('white')        
+    
         #If output_file_name is not none, save the plot as a .png file with output_file_name.png
         if nested_multiscatter_dict[setting]['output_name'] != None:
             plt.savefig(nested_multiscatter_dict[setting]['output_name'] + '.png', dpi=300, bbox_inches='tight')
