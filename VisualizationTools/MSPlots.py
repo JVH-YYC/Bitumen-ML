@@ -2242,18 +2242,85 @@ def create_multiple_UMAP_scatter(multi_scatter_plot_dict,
             if i == 0:
                 ax.set_title(multi_scatter_plot_dict['list_of_column_labels'][j], loc='center')
             
-            #Remove all axis tick-marks and labels
+            #Remove all axis tick-marks and label
             ax.set_xticks([])
             ax.set_yticks([])
             ax.set_xticklabels([])
             ax.set_yticklabels([])
-            
+    #Set full figure background as white
+    fig.patch.set_facecolor('white')        
     #If output_file_name is not none, save the plot as a .png file with output_file_name.png
     if output_file_name != None:
         plt.savefig(output_file_name + '.png', dpi=300, bbox_inches='tight')
     
     return
 
-                                    
+def create_consistent_multiUMAP_scatter(multi_scatter_plot_dict,
+                                        umap_scatter_dict,
+                                        nested_multiscatter_dict,
+                                        list_of_cluster_targets):
+    """
+    Docstring
+    """
+    # Do a dummy loop to create the original UMAP x/y coordinates.
+    # The looping order should be consistent, so using a list to store order
+    # Should be sufficient
+    fig, multi_ax = plt.subplots(nrows=multi_scatter_plot_dict['num_rows'],
+                                 ncols=multi_scatter_plot_dict['num_columns'],
+                                 figsize=(multi_scatter_plot_dict['plot_width'],
+                                          multi_scatter_plot_dict['plot_height']),
+                                          gridspec_kw={'wspace': 0, 'hspace': 0})
+    
+    list_of_umap_frames = []
+
+    for i, ax_row in enumerate(multi_ax):
+        for j, ax in enumerate(ax_row):
+            cluster_frame = create_umap_cluster_frame(list_of_cluster_targets[j],
+                                                      multi_scatter_plot_dict['list_of_UMAP_settings'][i]['n_neighbors'],
+                                                      multi_scatter_plot_dict['list_of_UMAP_settings'][i]['min_dist'])
+
+            list_of_umap_frames.append(cluster_frame)
+
+    # Now, for every set of settings in nested_multiscatter_dict, create and save
+    # The actual desired plots
+    for setting in nested_multiscatter_dict:
+        # Create the figure and axes
+        fig, multi_ax = plt.subplots(nrows=multi_scatter_plot_dict['num_rows'],
+                                        ncols=multi_scatter_plot_dict['num_columns'],
+                                        figsize=(multi_scatter_plot_dict['plot_width'],
+                                                multi_scatter_plot_dict['plot_height']),
+                                                gridspec_kw={'wspace': 0, 'hspace': 0})
+        for i, ax_row in enumerate(multi_ax):
+            for j, ax in enumerate(ax_row):
+                #Create individual scatter plot by updating ax
+                cluster_frame = list_of_umap_frames[i * multi_scatter_plot_dict['num_columns'] + j]
+                ax = update_scatter_ax(ax,
+                                       cluster_frame,
+                                       nested_multiscatter_dict[setting]['umap_settings'])
+                
+                #Add row title at first column
+                if j == 0:
+                    ax.annotate(multi_scatter_plot_dict['list_of_row_labels'][i],
+                                xy=(0, 0.5),
+                                xycoords=ax.yaxis.label,
+                                textcoords='offset points',
+                                ha='right', va='center')
+                
+                #Add column title at top row
+                if i == 0:
+                    ax.set_title(multi_scatter_plot_dict['list_of_column_labels'][j], loc='center')
+                
+                #Remove all axis tick-marks and label
+                ax.set_xticks([])
+                ax.set_yticks([])
+                ax.set_xticklabels([])
+                ax.set_yticklabels([])
+            
+        #If output_file_name is not none, save the plot as a .png file with output_file_name.png
+        if nested_multiscatter_dict[setting]['output_name'] != None:
+            plt.savefig(nested_multiscatter_dict[setting]['output_name'] + '.png', dpi=300, bbox_inches='tight')
+    
     return
+    
+
 
