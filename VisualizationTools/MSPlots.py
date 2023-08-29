@@ -2295,6 +2295,7 @@ def create_consistent_multiUMAP_scatter(multi_scatter_plot_dict,
                                         ncols=multi_scatter_plot_dict['num_columns'],
                                         figsize=(multi_scatter_plot_dict['plot_width'],
                                                 multi_scatter_plot_dict['plot_height']),
+                                                constrained_layout=True,
                                                 gridspec_kw={'wspace': 0, 'hspace': 0})
         for i, ax_row in enumerate(multi_ax):
             for j, ax in enumerate(ax_row):
@@ -2307,6 +2308,8 @@ def create_consistent_multiUMAP_scatter(multi_scatter_plot_dict,
                 #Add row title at first column
                 if j == 0:
                     ax.annotate(multi_scatter_plot_dict['list_of_row_labels'][i],
+                                fontsize=multi_scatter_plot_dict['font_size'],
+                                fontname=multi_scatter_plot_dict['font_type'],
                                 xy=(0, 0.5),
                                 xycoords=ax.yaxis.label,
                                 textcoords='offset points',
@@ -2314,7 +2317,10 @@ def create_consistent_multiUMAP_scatter(multi_scatter_plot_dict,
                 
                 #Add column title at top row
                 if i == 0:
-                    ax.set_title(multi_scatter_plot_dict['list_of_column_labels'][j], loc='center')
+                    ax.set_title(multi_scatter_plot_dict['list_of_column_labels'][j],
+                                 fontsize=multi_scatter_plot_dict['font_size'],
+                                 fontname=multi_scatter_plot_dict['font_type'],
+                                 loc='center')
                 
                 #Remove all axis tick-marks and label
                 ax.set_xticks([])

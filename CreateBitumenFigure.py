@@ -16,11 +16,11 @@ import torch.nn as nn
 #                                 list_of_cluster_targets = VS.cfgc_publication_multiscatter_data_list,
 #                                 output_file_name = 'test_multiscatter')
 
-MSP.create_consistent_multiUMAP_scatter(multi_scatter_plot_dict = VS.cfgc_publication_multi_UMAP_dict,
-                                        umap_scatter_dict = VS.cfgc_publication_umap_scatter_dict,
-                                        constant_umap_settings = VS.cfgc_publication_consistent_UMAP_dict,
-                                        nested_multiscatter_dict = VS.cfgc_publication_highlight_multiscatter,
-                                        list_of_cluster_targets = VS.cfgc_publication_single_highlight_multiscatter_list)
+#MSP.create_consistent_multiUMAP_scatter(multi_scatter_plot_dict = VS.cfgc_publication_multi_UMAP_dict,
+#                                        umap_scatter_dict = VS.cfgc_publication_umap_scatter_dict,
+#                                        constant_umap_settings = VS.cfgc_publication_consistent_UMAP_dict,
+#                                        nested_multiscatter_dict = VS.cfgc_publication_highlight_multiscatter,
+#                                        list_of_cluster_targets = VS.cfgc_publication_single_highlight_multiscatter_list)
 
 # dataset_param_dict = {'sm_file_directory': 'ExpCSV/SM_nar',
 #                       'ext_file_directory': 'ExpCSV/working_ext',
@@ -30,7 +30,31 @@ MSP.create_consistent_multiUMAP_scatter(multi_scatter_plot_dict = VS.cfgc_public
 #                       'condition_dict': condition_dict,
 #                       'pickle_file': False,
 #                       'output_name': 'placeholder'}
-                        
+
+#SM_csv_folder_list = ['./AllCSV/',
+#                   './AllCSV/']
+
+#SM_csv_file_list = ['L1_SM_nar.csv',
+#                 'S2_SM_nar.csv']
+
+#SM_plot_label_list = ['A1 Asphaltene SM',
+#                   'A2 Asphaltene SM']
+
+#SM_yaxis_label_list = ['Ion Intensity (ppt)',
+#                       'Ion Intensity (ppt)']
+
+#SM_list_of_pal_dict = [VS.standard_blue_pal_dict,
+#                         VS.standard_orange_pal_dict]
+
+#SM_hrms_plot_dict = VS.cfgc_publication_hrms_plot_dict
+
+#MSP.create_ms_bar_stack_from_file_list(list_of_csv_file_directories=SM_csv_folder_list,
+#                                       list_of_csv_file_names=SM_csv_file_list,
+#                                       list_of_plot_labels=SM_plot_label_list,
+#                                       list_of_yaxis_labels=SM_yaxis_label_list,
+#                                       list_of_palette_dicts=SM_list_of_pal_dict,
+#                                       hrms_plot_dict=SM_hrms_plot_dict)
+
 # MSP.create_ms_difference_stack(list_of_csv_file_directories=csv_folder_list,
 #                                list_of_csv_file_names=csv_file_list,
 #                                list_of_plot_labels=plot_label_list,
