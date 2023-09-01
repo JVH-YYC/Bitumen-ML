@@ -31,57 +31,59 @@ import torch.nn as nn
 #                       'pickle_file': False,
 #                       'output_name': 'placeholder'}
 
-#SM_csv_folder_list = ['./AllCSV/',
-#                   './AllCSV/']
+SM_csv_folder_list = ['./AllCSV/',
+                   './AllCSV/']
 
-#SM_csv_file_list = ['L1_SM_nar.csv',
-#                 'S2_SM_nar.csv']
+SM_csv_file_list = ['L1_SM_nar.csv',
+                 'S2_SM_nar.csv']
 
-#SM_plot_label_list = ['A1 Asphaltene SM',
-#                   'A2 Asphaltene SM']
+SM_plot_label_list = ['A1 Asphaltene SM',
+                   'A2 Asphaltene SM']
 
-#SM_yaxis_label_list = ['Ion Intensity (ppt)',
-#                       'Ion Intensity (ppt)']
+SM_yaxis_label_list = ['Ion Intensity (ppt)',
+                       'Ion Intensity (ppt)']
 
-#SM_list_of_pal_dict = [VS.standard_blue_pal_dict,
-#                         VS.standard_orange_pal_dict]
+SM_list_of_pal_dict = [VS.standard_blue_pal_dict,
+                         VS.standard_orange_pal_dict]
 
-#SM_hrms_plot_dict = VS.cfgc_publication_hrms_plot_dict
+SM_hrms_plot_dict = VS.cfgc_publication_hrms_plot_dict
 
-#MSP.create_ms_bar_stack_from_file_list(list_of_csv_file_directories=SM_csv_folder_list,
-#                                       list_of_csv_file_names=SM_csv_file_list,
-#                                       list_of_plot_labels=SM_plot_label_list,
-#                                       list_of_yaxis_labels=SM_yaxis_label_list,
-#                                       list_of_palette_dicts=SM_list_of_pal_dict,
-#                                       hrms_plot_dict=SM_hrms_plot_dict)
+MSP.create_ms_bar_stack_from_file_list(list_of_csv_file_directories=SM_csv_folder_list,
+                                       list_of_csv_file_names=SM_csv_file_list,
+                                       list_of_plot_labels=SM_plot_label_list,
+                                       list_of_yaxis_labels=SM_yaxis_label_list,
+                                       list_of_palette_dicts=SM_list_of_pal_dict,
+                                       hrms_plot_dict=SM_hrms_plot_dict,
+                                       output_name='Starting Material HRMS.png')
 
-fig_2_csv_folder_list = ['.AllCSV/',
-                         './AllCSV/']
+#fig_2_csv_folder_list = ['./AllCSV/',
+#                         './AllCSV/']
 
-fig_2_csv_file_list = ['L1_SM_nar.csv',
-                       '19226_nar.csv']
+#fig_2_csv_file_list = ['L1_SM_nar.csv',
+#                       '19226_nar.csv']
 
-fig_2_plot_label_list = ['A1 Asphaltene SM',
-                         '49.8% iPrOH in DCM',
-                         'Absolute Difference']
+#fig_2_plot_label_list = ['A1 Asphaltene SM',
+#                         'After extraction with\n49.8% iPrOH/DCM',
+#                         'Absolute Difference']
 
-fig_2_yaxis_label_list = ['Ion Intensity (ppt)',
-                          'Ion Intensity (ppt)',
-                          'Absolute Diff (ppt)']
+#fig_2_yaxis_label_list = ['Ion Intensity (ppt)',
+#                          'Ion Intensity (ppt)',
+#                          '']
 
-fig_2_list_of_pal_dict = [VS.standard_blue_pal_dict,
-                         VS.standard_orange_pal_dict,
-                         VS.standard_green_pal_dict]
+#fig_2_list_of_pal_dict = [VS.standard_blue_pal_dict,
+#                         VS.standard_orange_pal_dict,
+#                         VS.standard_green_pal_dict]
 
-fig_2_hrms_plot_dict = VS.cfgc_publication_hrms_plot_dict
+#fig_2_hrms_plot_dict = VS.cfgc_publication_hrms_plot_dict
 
-MSP.create_ms_difference_stack(list_of_csv_file_directories=fig_2_csv_folder_list,
-                                list_of_csv_file_names=fig_2_csv_file_list,
-                                list_of_plot_labels=fig_2_plot_label_list,
-                                list_of_yaxis_labels=fig_2_yaxis_label_list,
-                                list_of_palette_dicts=fig_2_list_of_pal_dict,
-                                hrms_plot_dict=fig_2_hrms_plot_dict,
-                                difference_mode='absolute')
+#MSP.create_ms_difference_stack(list_of_csv_file_directories=fig_2_csv_folder_list,
+#                                list_of_csv_file_names=fig_2_csv_file_list,
+#                                list_of_plot_labels=fig_2_plot_label_list,
+#                                list_of_yaxis_labels=fig_2_yaxis_label_list,
+#                                list_of_palette_dicts=fig_2_list_of_pal_dict,
+#                                hrms_plot_dict=fig_2_hrms_plot_dict,
+#                                difference_mode='absolute',
+#                                output_name='extraction_diff.png')
 
 # MSP.create_predicted_vs_actual_stack(dataset_param_dict=dataset_param_dict,
 #                                      network_load_dict=network_load_dict,

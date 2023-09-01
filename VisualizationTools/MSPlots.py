@@ -52,11 +52,14 @@ def load_single_ms(csv_file_directory,
     
     return hrms_dict
 
-def create_single_hrms_xy_pairs(hrms_dict):
+def create_single_hrms_xy_pairs(hrms_dict,
+                                mw_range = (200, 1000)):
     """
     A function that takes a HRMS dictionary of the standard format from BitumenCSVtoDict,
     and converts it into a list of (x, y) tuples for conversion into a visual plot of the spectra
 
+    Updated version: include a MW cut-off range to remove artifacts and very low intensity/spuriorus peaks
+    200 to 1000 is the default range, but can be changed as needed
     Parameters
     ----------
     hrms_dict : dictionary
@@ -72,7 +75,8 @@ def create_single_hrms_xy_pairs(hrms_dict):
 
     for specific_ion in hrms_dict:
         curr_fw = CTD.formula_to_mass(specific_ion)
-        hrms_ion_list.append((curr_fw, hrms_dict[specific_ion]))
+        if curr_fw >= mw_range[0] and curr_fw <= mw_range[1]:
+            hrms_ion_list.append((curr_fw, hrms_dict[specific_ion]))
     
     return hrms_ion_list
 
