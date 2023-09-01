@@ -276,7 +276,8 @@ def plot_multiple_hrms_stack(list_of_hrms_spectra,
                              list_of_plot_labels,
                              list_of_yaxis_labels,
                              list_of_palette_dicts,
-                             hrms_plot_dict):
+                             hrms_plot_dict,
+                             output_name):
     """
     A function, similar to above, that takes multiple HRMS spectra and
     stacks them on top of one another with a shared x-axis at the bottom
@@ -440,7 +441,7 @@ def plot_multiple_hrms_stack(list_of_hrms_spectra,
         
     # Save the figure
     if hrms_plot_dict['save_output'] == True:
-            plt.savefig(hrms_plot_dict['output_name'],
+            plt.savefig(output_name,
                         facecolor="white",
                         bbox_inches='tight',
                         pad_inches=0.05,
@@ -618,7 +619,8 @@ def create_ms_bar_stack_from_file_list(list_of_csv_file_directories,
                                        list_of_plot_labels,
                                        list_of_yaxis_labels,
                                        list_of_palette_dicts,
-                                       hrms_plot_dict):
+                                       hrms_plot_dict,
+                                       output_name):
     """
     A function that takes an unlimited number of MS .csv files and plots them
     in an ordered stack (first file = top of plot). It requires each entry
@@ -694,20 +696,19 @@ def create_ms_bar_stack_from_file_list(list_of_csv_file_directories,
                              list_of_plot_labels,
                              list_of_yaxis_labels,
                              list_of_palette_dicts,
-                             hrms_plot_dict)
+                             hrms_plot_dict,
+                             output_name)
     
     return
     
 def create_ms_difference_stack(list_of_csv_file_directories,
                                list_of_csv_file_names,
                                list_of_plot_labels,
-                               new_plot_label,
                                list_of_yaxis_labels,
-                               new_yaxis_label,
                                list_of_palette_dicts,
-                               new_palette_dict,
                                hrms_plot_dict,
-                               difference_mode):
+                               difference_mode,
+                               output_name):
     """
     A function that takes two .csv files, and substracts the *first* from the *second*. So, if the second 
     (typically==predicted) spectrum overestimates a peak, the direction of the error will be positive.
@@ -787,15 +788,12 @@ def create_ms_difference_stack(list_of_csv_file_directories,
                                                   list_of_csv_file_names,
                                                   difference_mode)
 
-    list_of_plot_labels.append(new_plot_label)
-    list_of_yaxis_labels.append(new_yaxis_label)
-    list_of_palette_dicts.append(new_palette_dict)
-
     plot_multiple_hrms_stack(list_of_hrms_spectra,
                              list_of_plot_labels,
                              list_of_yaxis_labels,
                              list_of_palette_dicts,
-                             hrms_plot_dict)  
+                             hrms_plot_dict,
+                             output_name)  
     
     return
     
