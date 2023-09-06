@@ -41,6 +41,7 @@ cfgc_bitumen_label_keys = {'L1_SM': 'L1_SM',
                         '19242': 'L1',
                         '19243': 'L1'}
 
+#Barcode is [toluene, DCM, iPrOH, ace, AcOH, NEt3]
 cfgc_bitumen_condition_dict = {'L1_SM': [0, 0, 0, 0, 0, 0],
                   'S2_SM': [0, 0, 0, 0, 0, 0],
                   '19208': [0, 0.900, 0.100, 0, 0, 0],
