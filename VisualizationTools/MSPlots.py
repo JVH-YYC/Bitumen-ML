@@ -18,9 +18,11 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import matplotlib.cm as cm
 import matplotlib.colors as colors
+from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import os
 import sys
 import pickle
 import VisualizationTools.UMAPPlots as UMP
@@ -2356,6 +2358,67 @@ def create_consistent_multiUMAP_scatter(multi_scatter_plot_dict,
             plt.savefig(nested_multiscatter_dict[setting]['output_name'] + '.png', dpi=300, bbox_inches='tight')
     
     return
+
+def heatmap_from_csv(csv_folder,
+                     csv_file_name,
+                     output_name,
+                     output_file_type,
+                     heatmap_dict):
+    """
+    Docstring
+    """
+    # Read in the csv file
+    csv_file = os.path.join(csv_folder, csv_file_name)
+    df = pd.read_csv(csv_file, index_col=0, header=0)
     
+    if heatmap_dict['log_val'] == True:
+        df = np.log10(df)
+
+    # Create the heatmap
+    cmap = sns.diverging_palette(220, 20, sep=5, n=100, as_cmap=True)
+    
+    vmin = np.log10(0.5)
+    vmax = np.log10(2.0)
+    center = 0.0
+
+    fig, ax = plt.subplots(figsize=(heatmap_dict['plot_width'],
+                                    heatmap_dict['plot_height']))
+    
+    sns.heatmap(df, cmap=cmap, center=center, vmin=vmin, vmax=vmax, ax=ax)
+    plt.subplots_adjust(left=0.2)
+    
+    # Change font to DejaVu Sans for the row labels
+    for label in ax.get_yticklabels():
+        label.set_fontname(heatmap_dict['font_type'])
+        label.set_fontsize(heatmap_dict['font_size'])
+        label.align = 'left'   
+    
+    # Change font to DejaVus Sans for the column labels
+    for label in ax.get_xticklabels():
+        label.set_fontname(heatmap_dict['font_type'])
+        label.set_fontsize(heatmap_dict['font_size'])
+    
+    # Change font type and size for the colobar
+    cbar = ax.collections[0].colorbar
+    cbar.ax.tick_params(labelsize=heatmap_dict['font_size'])
+
+    # Remove y-axis label
+    ax.set_ylabel('')
+
+    #Update tick positions if necessary
+    if heatmap_dict['tick_override'] == True:
+        cbar.set_ticks(heatmap_dict['tick_positions'])
+        cbar.set_ticklabels(heatmap_dict['tick_labels'])
+
+    # Save the heatmap
+    plt.savefig(output_name,
+                dpi=300,
+                facecolor="white",
+                bbox_inches='tight',
+                pad_inches=0.05,
+                format=output_file_type)
+    plt.close()
+    return
+
 
 

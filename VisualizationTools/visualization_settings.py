@@ -2,6 +2,7 @@
 #And other compiled settings
 
 import torch.nn as nn
+import numpy as np
 
 cfgc_bitumen_label_keys = {'L1_SM': 'L1_SM',
                            'S2_SM': 'S2_SM',
@@ -835,5 +836,31 @@ cfgc_publication_highlight_multiscatter = {'tol_AcOH': {'umap_settings': {'marke
                                                                         'DCM_ace': 'x',
                                                                         'tol_net': 'o'}}},
                                                                     'output_name': 'tol_net'}}
+
+cfgc_heatmap_settings = {'plot_width': 6,
+                        'plot_height': 8,
+                        'log_val': True,
+                        'font_type': 'DejaVu Sans',
+                        'font_size': 10,
+                        'tick_override': True,
+                        'tick_positions': [np.log10(0.5),
+                                           np.log10(1/1.75), 
+                                           np.log10(1/1.5),
+                                           np.log10(1/1.25),
+                                           np.log10(1.0),
+                                           np.log10(1.25),
+                                           np.log10(1.5),
+                                           np.log10(1.75),
+                                           np.log10(2.0)],
+                        'tick_labels': ['/ 2',
+                                        '/ 1.75',
+                                        '/ 1.5',
+                                        '/ 1.25',
+                                        'NC',
+                                        'x 1.25',
+                                        'x 1.5',
+                                        'x 1.75',
+                                        'x 2']}
+                                           
 
 

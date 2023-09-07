@@ -22,14 +22,14 @@ import torch.nn as nn
 #                                        nested_multiscatter_dict = VS.cfgc_publication_highlight_multiscatter,
 #                                        list_of_cluster_targets = VS.cfgc_publication_single_highlight_multiscatter_list)
 
-dataset_param_dict = {'sm_file_directory': 'AllCSV',
-                      'ext_file_directory': 'AllCSV',
-                      'label_keys': VS.cfgc_bitumen_label_keys,
-                      'test_list': ['19243_nar.csv',],
-                      'locked_formula': VS.cfgc_publication_locked_formula,
-                      'condition_dict': VS.cfgc_bitumen_condition_dict,
-                      'pickle_file': False,
-                      'output_name': 'placeholder'}
+# dataset_param_dict = {'sm_file_directory': 'AllCSV',
+#                       'ext_file_directory': 'AllCSV',
+#                       'label_keys': VS.cfgc_bitumen_label_keys,
+#                       'test_list': ['19243_nar.csv',],
+#                       'locked_formula': VS.cfgc_publication_locked_formula,
+#                       'condition_dict': VS.cfgc_bitumen_condition_dict,
+#                       'pickle_file': False,
+#                       'output_name': 'placeholder'}
 
 # SM_csv_folder_list = ['./AllCSV/',
 #                   './AllCSV/']
@@ -130,10 +130,10 @@ dataset_param_dict = {'sm_file_directory': 'AllCSV',
 #                                         pickle_file_name_list=pers_ppe_list,
 #                                         violin_plot_dict=violin_plot_dict)
     
-MSP.multiple_ppe_violin_plot_from_pickle(list_of_pickle_dict=VS.cfgc_publication_list_of_pickle_dict,
-                                          violin_plot_dict=VS.cfgc_publication_violin_plot_dict,
-                                          output_name='cfgc_overall_results_violin.png',
-                                          output_file_type='png')
+# MSP.multiple_ppe_violin_plot_from_pickle(list_of_pickle_dict=VS.cfgc_publication_list_of_pickle_dict,
+#                                           violin_plot_dict=VS.cfgc_publication_violin_plot_dict,
+#                                           output_name='cfgc_overall_results_violin.png',
+#                                           output_file_type='png')
 
 # dataset_param_dict = {'sm_file_directory': 'ExpCSV/S1_SM_folder',
 #                       'ext_file_directory': 'ExpCSV/S1_ext_folder',
@@ -144,4 +144,8 @@ MSP.multiple_ppe_violin_plot_from_pickle(list_of_pickle_dict=VS.cfgc_publication
 #                       'pickle_file': False,
 #                       'output_name': 'placeholder'}
 
-
+MSP.heatmap_from_csv(csv_folder='Heatmap CSV',
+                     csv_file_name='Combined Ext for Heatmap.csv',
+                     output_name='Combined Ext Heatmap.png',
+                     output_file_type='png',
+                     heatmap_dict=VS.cfgc_heatmap_settings)
