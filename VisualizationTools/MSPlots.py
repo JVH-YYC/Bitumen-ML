@@ -444,14 +444,12 @@ def plot_multiple_hrms_stack(list_of_hrms_spectra,
                                  hrms_plot_dict['ymajor_ticks'],
                                  hrms_plot_dict['yminor_ticks'])            
         
-    # Save the figure
-    if hrms_plot_dict['save_output'] == True:
-            plt.savefig(output_name,
-                        format=output_file_type,
-                        facecolor="white",
-                        bbox_inches='tight',
-                        pad_inches=0.05,
-                        dpi=300)
+    plt.savefig(output_name,
+                format=output_file_type,
+                facecolor="white",
+                bbox_inches='tight',
+                pad_inches=0.05,
+                dpi=300)
     plt.close()
 
 def round_to_nearest_tick(curr_axis_max,
@@ -626,7 +624,8 @@ def create_ms_bar_stack_from_file_list(list_of_csv_file_directories,
                                        list_of_yaxis_labels,
                                        list_of_palette_dicts,
                                        hrms_plot_dict,
-                                       output_name):
+                                       output_name,
+                                       output_file_type):
     """
     A function that takes an unlimited number of MS .csv files and plots them
     in an ordered stack (first file = top of plot). It requires each entry
@@ -703,7 +702,8 @@ def create_ms_bar_stack_from_file_list(list_of_csv_file_directories,
                              list_of_yaxis_labels,
                              list_of_palette_dicts,
                              hrms_plot_dict,
-                             output_name)
+                             output_name,
+                             output_file_type)
     
     return
     
@@ -813,7 +813,9 @@ def create_predicted_vs_actual_stack(dataset_param_dict,
                                      list_of_yaxis_labels,
                                      list_of_palette_dicts,
                                      hrms_plot_dict,
-                                     difference_mode):
+                                     difference_mode,
+                                     output_name,
+                                     output_file_type):
     """
     A function that takes an extraction HRMS file, as well as a trained network (using the total ion set approach),
     calculates the predicted HRMS, and also the difference between the two (in any of 3 kinds of error)
@@ -951,7 +953,9 @@ def create_predicted_vs_actual_stack(dataset_param_dict,
                              list_of_plot_labels,
                              list_of_yaxis_labels,
                              list_of_palette_dicts,
-                             hrms_plot_dict)  
+                             hrms_plot_dict,
+                             output_name,
+                             output_file_type)  
     
     return
 
@@ -1786,7 +1790,9 @@ def combine_pickled_data(list_of_file_directories,
     return initial_data_charge
 
 def multiple_ppe_violin_plot_from_pickle(list_of_pickle_dict,
-                                         violin_plot_dict):
+                                         violin_plot_dict,
+                                         output_name,
+                                         output_file_type):
     """
     A function that takes a list of dictionaries, where each dictionary contains the information
     necessary to combine and number of pickled data files (or a single file), and plots a single
@@ -1894,15 +1900,23 @@ def multiple_ppe_violin_plot_from_pickle(list_of_pickle_dict,
     #Add y-axis headroom so that a label can be appended
     ax.set_ylim(min(long_combined_dataframe['data']), round_ylim)
 
+    #Check for y-axis override
+    if violin_plot_dict['yaxis_override'] == True:
+        print('Y-axis override')
+        ax.set_ylim(violin_plot_dict['yaxis_min'], violin_plot_dict['yaxis_max'])
+
     # Remove legend if desired
     if violin_plot_dict['legend'] == False:
         ax.legend().remove()
         
-    # If save_output is true, save the figure as a .png file
-    if violin_plot_dict['save_output']:
-        plt.savefig(violin_plot_dict['output_name'], dpi=300, bbox_inches='tight')
+    plt.savefig(output_name,
+                dpi=300,
+                facecolor="white",
+                bbox_inches='tight',
+                pad_inches=0.05,
+                format=output_file_type)
 
-    return long_combined_dataframe
+    return
     
 def multiple_predact_scatter_from_pickel(list_of_pickle_dict,
                                          scatter_plot_dict):

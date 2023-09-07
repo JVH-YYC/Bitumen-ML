@@ -203,10 +203,9 @@ standard_green_pal_dict = {'palette': 'Greens',
                            'shade_choice': 3}
 
 cfgc_publication_network_param_dict = {'layer_size_list': [800,800,800,800,800,],
-                      'starting_width': 17,
-                      'batch_norm': False,
-                      'dropout_amt': 0.05,
-                      'activation': nn.ReLU() }
+                                       'batch_norm': False,
+                                       'dropout_amt': 0.05,
+                                       'activation': nn.ReLU() }
 
 cfgc_publication_predact_plot_dict = {'plot_width': 3.5,
                       'plot_height': 4.0,
@@ -225,8 +224,8 @@ cfgc_publication_predact_plot_dict = {'plot_width': 3.5,
                       'minor_ticks': 0.1,
                       'save_output': True}
 
-cfgc_publication_violin_plot_dict = {'plot_width': 3.5,
-                      'plot_height': 4.0,
+cfgc_publication_violin_plot_dict = {'plot_width': 3.2,
+                      'plot_height': 3.0,
                       'palette': 'Oranges',
                       'num_shades': 5,
                       'shade_choice': 3,
@@ -236,20 +235,21 @@ cfgc_publication_violin_plot_dict = {'plot_width': 3.5,
                       'xaxis_rotation': 90,
                       'yaxis_label': 'Log10 Squared Error',
                       'yaxis_rotation': 0,
-                      'font_type': 'FreeSans',
+                      'font_type': 'DejaVu Sans',
                       'font_size': 8,
                       'axis_scale_size': 6,
                       'plot_title': '',
                       'major_ticks': 0.1,
                       'minor_ticks': 0.01,
                       'yaxis_headspace': 0.1,
+                      'yaxis_override': True,
+                      'yaxis_min': -6,
+                      'yaxis_max': 0.5,
                       'bandwidth': 0.33,
                       'cut': 0,
                       'inner': 'quartile',
                       'legend': False,
-                      'multi-plot scale': 'squared',
-                      'save_output': True,
-                      'output_name': 'first_Multi'}
+                      'multi-plot scale': 'squared'}
 
 cfgc_predact_combined_dir_list = ['Persistence Pickles/',] * 17
 
