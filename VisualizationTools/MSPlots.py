@@ -1879,9 +1879,11 @@ def multiple_ppe_violin_plot_from_pickle(list_of_pickle_dict,
     plt.rcParams['font.family'] = violin_plot_dict['font_type']
     plt.rcParams['font.size'] = violin_plot_dict['font_size']
     # Set the y-axis label
-    ax.set_ylabel(violin_plot_dict['yaxis_label'])
+    ax.set_ylabel(violin_plot_dict['yaxis_label'],
+                  size=violin_plot_dict['font_size'])
     # Set the x-axis label
-    ax.set_xlabel(violin_plot_dict['xaxis_label'])
+    ax.set_xlabel(violin_plot_dict['xaxis_label'],
+                  size=violin_plot_dict['font_size'])
     # Set the x-axis tick label rotation
     plt.xticks(rotation=violin_plot_dict['xaxis_rotation'])
     # Set the y-axis tick label rotation
@@ -2176,6 +2178,7 @@ def create_umap_scatter(umap_cluster_dataframe,
     return marker_color_list                             
 
 def update_scatter_ax(ax,
+                      marker_size,
                       umap_cluster_dataframe,
                       umap_scatter_dict):
     """
@@ -2225,7 +2228,8 @@ def update_scatter_ax(ax,
     
     # Iterate over points to make the plot
     for x, y, color, opacity, marker_type in zip(x_val, y_val, marker_color_list, opacity_list, marker_type_list):
-        ax.scatter(x, y, color=color, alpha=opacity, marker=marker_type)
+        print('Marker type is:', marker_type)
+        ax.scatter(x, y, color=color, alpha=opacity, marker=marker_type, s=marker_size)
     
     return ax
 
@@ -2253,6 +2257,7 @@ def create_multiple_UMAP_scatter(multi_scatter_plot_dict,
                                                       multi_scatter_plot_dict['list_of_UMAP_settings'][i]['min_dist'])
             
             ax = update_scatter_ax(ax,
+                                   multi_scatter_plot_dict['point_size'],
                                    cluster_frame,
                                    umap_scatter_dict)
             
@@ -2324,6 +2329,7 @@ def create_consistent_multiUMAP_scatter(multi_scatter_plot_dict,
                 #Create individual scatter plot by updating ax
                 cluster_frame = list_of_umap_frames[i * multi_scatter_plot_dict['num_columns'] + j]
                 ax = update_scatter_ax(ax,
+                                       multi_scatter_plot_dict['point_size'],
                                        cluster_frame,
                                        nested_multiscatter_dict[setting]['umap_settings'])
                 
