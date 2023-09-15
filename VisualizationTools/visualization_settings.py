@@ -838,10 +838,10 @@ cfgc_publication_highlight_multiscatter = {'tol_AcOH': {'umap_settings': {'marke
                                                                     'output_name': 'tol_net'}}
 
 cfgc_heatmap_settings = {'plot_width': 6,
-                        'plot_height': 8,
+                        'plot_height': 7.25,
                         'log_val': True,
                         'font_type': 'DejaVu Sans',
-                        'font_size': 10,
+                        'font_size': 8,
                         'tick_override': True,
                         'tick_positions': [np.log10(0.5),
                                            np.log10(1/1.75), 
