@@ -142,7 +142,6 @@ def create_extraction_set_via_tis(training_dict,
             for try_top_level in training_dict.keys():
                 if curr_sm_label in try_top_level:
                     sm_location = try_top_level
-  
             for possible_ion in total_ion_set:
                 if possible_ion in training_dict[file_key][1].keys():
                     observed_tuples.add(possible_ion)

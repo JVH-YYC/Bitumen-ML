@@ -459,7 +459,7 @@ def single_sum_dict(mass_spec_frame):
     In this case, normalization is done with the total observed intensity,
     rather than the size of the largest peak.
     
-    MW Cutoffs of 200-1200 used for a reasonable range
+    MW Cutoffs of 200-1000 used for a reasonable range
     
     Essentially, the units for graphs plotted with this dictionary will be 'Parts-per-thousand'
 
@@ -486,11 +486,49 @@ def single_sum_dict(mass_spec_frame):
     
     for formula, current_row in mass_spec_frame.iterrows():
         formula_tuple = formula_to_tuple(formula)
-        if formula_to_mass(formula_tuple) >= 200.0 and formula_to_mass(formula_tuple) <=1200.0:    
+        if formula_to_mass(formula_tuple) >= 200.0 and formula_to_mass(formula_tuple) <=1000.0:    
             ms_dict[formula_tuple] = (current_row['Total'] / normalization_sum) * 1000
         
     return ms_dict
     
+def print_single_file_size(csv_file_directory,
+                           csv_file_name):
+    """
+    A function that prints the size of a single file, in terms of number of
+    molecular formulae observed.
+    """
+    column_names = ['Formula',
+                    'Mono Inty']
+    csv_location = csv_file_directory + '/' + csv_file_name
+    starting_frame = pd.read_csv(csv_location, names=column_names)
+    formula_frame = starting_frame[starting_frame['Formula'].notna()]
+    formula_frame = formula_frame[[x[0] == 'C' for x in formula_frame['Formula']]]
+    
+    formula_dict = single_sum_dict(formula_frame)
+    print('Size of dict is:', len(formula_dict))
+    
+    return
+
+def print_full_sm_set_size(csv_file_directory,
+                           list_of_csv_files):
+    """
+    A function that combines the SM files and counts their size
+    """
+    column_names = ['Formula',
+                    'Mono Inty']
+    ion_set = set()
+    for entry in list_of_csv_files:
+        csv_location = csv_file_directory + '/' + entry
+        starting_frame = pd.read_csv(csv_location, names=column_names)
+        formula_frame = starting_frame[starting_frame['Formula'].notna()]
+        formula_frame = formula_frame[[x[0] == 'C' for x in formula_frame['Formula']]]
+        
+        formula_dict = single_sum_dict(formula_frame)
+        curr_set = set(formula_dict.keys())
+        ion_set = ion_set.union(curr_set)
+    
+    print('Size of total ion set is:', len(ion_set))
+
 
 def open_sum_training_dict(sm_file_directory,
                            ext_file_directory,

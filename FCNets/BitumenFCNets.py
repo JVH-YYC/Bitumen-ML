@@ -944,6 +944,15 @@ class BitumenExtTISDataset(Dataset):
 
     def return_curr_formula(self):
         return self.current_test_formula
+    
+    def report_dataset_metrics(self):
+        print('Size of total ion set is:', len(self.total_ion_set))
+        zero_ions = 0
+        for target in self.test_targets:
+            if target == 0:
+                zero_ions += 1
+        print('With', zero_ions, 'zero ion targets')
+        return
 
 class NeighborExtFullDataset(Dataset):
     def __init__(self,

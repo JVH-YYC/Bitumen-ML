@@ -100,14 +100,21 @@ locked_formula=[(1,2,0,0,0),(-1,-2,0,0,0),
                 (2,0,0,0,0),(-2,0,0,0,0),
                 (3,2,0,0,0),(-3,-2,0,0,0)]
 
-# dataset = BFN.BitumenExtTISDataset(sm_file_directory='ExpCSV/SM_nar/',
-#                                    ext_file_directory='ExpCSV/working_ext',
-#                                    label_keys=label_keys,
-#                                    test_list=['19208_nar.csv'],
-#                                    locked_formula=locked_formula,
-#                                    condition_dict=condition_dict,
-#                                    pickle_file=False,
-#                                    output_name='placeholder')
+def print_full_cfgc_dataset_stats():
+    for single_file in label_keys:
+        if 'SM' not in single_file:
+            curr_file_name = single_file + '_nar.csv'
+            dataset = BFN.BitumenExtTISDataset(sm_file_directory='SMCSV',
+                                            ext_file_directory='ExtCSV',
+                                            label_keys=label_keys,
+                                            test_list=[curr_file_name,],
+                                            locked_formula=[],
+                                            condition_dict=condition_dict,
+                                            pickle_file=False,
+                                            output_name='placeholder')
+            print('For extractions file:', curr_file_name)
+            dataset.report_dataset_metrics()
+    return
 
 test_dict = MSP.combine_pickled_data(['Split Average Pickles/',],
                                      ['19208_split_average_predact.pkl'])
