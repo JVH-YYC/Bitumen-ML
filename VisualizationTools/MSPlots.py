@@ -2228,7 +2228,6 @@ def update_scatter_ax(ax,
     
     # Iterate over points to make the plot
     for x, y, color, opacity, marker_type in zip(x_val, y_val, marker_color_list, opacity_list, marker_type_list):
-        print('Marker type is:', marker_type)
         ax.scatter(x, y, color=color, alpha=opacity, marker=marker_type, s=marker_size)
     
     return ax
@@ -2362,6 +2361,78 @@ def create_consistent_multiUMAP_scatter(multi_scatter_plot_dict,
         #If output_file_name is not none, save the plot as a .png file with output_file_name.png
         if nested_multiscatter_dict[setting]['output_name'] != None:
             plt.savefig(nested_multiscatter_dict[setting]['output_name'] + '.png', dpi=300, bbox_inches='tight')
+    
+    return
+
+def all_solvent_UMAP(multi_scatter_plot_dict,
+                     constant_umap_settings,
+                     multisolvent_umap_dict,
+                     csv_file_column_list,
+                     column_dictionary_key,
+                     output_file_name):
+    """
+    Docstring
+    """
+    # Do a dummy loop to create the original UMAP x/y coordinates.
+    # The looping order should be consistent, so using a list to store order
+    # Should be sufficient
+    fig, multi_ax = plt.subplots(nrows=multi_scatter_plot_dict['num_rows'],
+                                 ncols=multi_scatter_plot_dict['num_columns'],
+                                 figsize=(multi_scatter_plot_dict['plot_width'],
+                                          multi_scatter_plot_dict['plot_height']),
+                                          gridspec_kw={'wspace': 0.05, 'hspace': 0.1})
+    
+    #For num_columns, create the necessary number of UMAP frames
+    list_of_umap_frames = []
+    for col_entry in range(multi_scatter_plot_dict['num_columns']):
+        curr_umap_frame = create_umap_cluster_frame(csv_file_column_list[col_entry],
+                                                constant_umap_settings,
+                                                multi_scatter_plot_dict['single_UMAP_settings']['n_neighbors'],
+                                                multi_scatter_plot_dict['single_UMAP_settings']['min_dist'])
+        list_of_umap_frames.append(curr_umap_frame)
+
+    # Now, for every set of plot settings in nested_multiscatter_dict, create
+    # The actual desired plots. There should be matching num_rows and # of entries in dict
+    # Each dict entry
+    for row_setting in multisolvent_umap_dict:
+        for i, ax_row in enumerate(multi_ax):
+            for j, ax in enumerate(ax_row):
+                #Create individual scatter plot by updating ax
+                cluster_frame = list_of_umap_frames[j]
+                ax = update_scatter_ax(ax,
+                                       multi_scatter_plot_dict['point_size'],
+                                       cluster_frame,
+                                       multisolvent_umap_dict[column_dictionary_key[i][1]]['umap_settings'])
+                
+                #Add row title at first column
+                if j == 0:
+                    ax.annotate(column_dictionary_key[i][0],
+                                fontsize=multi_scatter_plot_dict['font_size'],
+                                fontname=multi_scatter_plot_dict['font_type'],
+                                xy=(0, 0.5),
+                                xycoords=ax.yaxis.label,
+                                textcoords='offset points',
+                                ha='right', va='center')
+                
+                #Add column title at top row
+                if i == 0:
+                    ax.set_title(multi_scatter_plot_dict['list_of_column_labels'][j],
+                                 fontsize=multi_scatter_plot_dict['font_size'],
+                                 fontname=multi_scatter_plot_dict['font_type'],
+                                 loc='center')
+                
+                #Remove all axis tick-marks and label
+                ax.set_xticks([])
+                ax.set_yticks([])
+                ax.set_xticklabels([])
+                ax.set_yticklabels([])
+        
+    #Set full figure background as white
+    fig.patch.set_facecolor('white')        
+    plt.draw()
+    #If output_file_name is not none, save the plot as a .png file with output_file_name.png
+    if output_file_name != None:
+        plt.savefig(output_file_name + '.png', dpi=300, bbox_inches='tight')
     
     return
 

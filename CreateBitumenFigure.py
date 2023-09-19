@@ -22,6 +22,13 @@ import torch.nn as nn
 #                                        nested_multiscatter_dict = VS.cfgc_publication_highlight_multiscatter,
 #                                        list_of_cluster_targets = VS.cfgc_publication_single_highlight_multiscatter_list)
 
+MSP.all_solvent_UMAP(multi_scatter_plot_dict = VS.cfgc_publication_multi_multisolvent_scatter_dict,
+                     constant_umap_settings = VS.cfgc_publication_consistent_UMAP_dict,
+                     multisolvent_umap_dict=VS.cfgc_publication_multisolvent_dict,
+                     csv_file_column_list=VS.cfgc_publication_single_highlight_multiscatter_list,
+                     column_dictionary_key=VS.cfgc_publication_multisolvent_label_key,
+                     output_file_name='test_allsolv')
+
 # dataset_param_dict = {'sm_file_directory': 'AllCSV',
 #                       'ext_file_directory': 'AllCSV',
 #                       'label_keys': VS.cfgc_bitumen_label_keys,
@@ -144,8 +151,8 @@ import torch.nn as nn
 #                       'pickle_file': False,
 #                       'output_name': 'placeholder'}
 
-MSP.heatmap_from_csv(csv_folder='Heatmap CSV',
-                     csv_file_name='Combined Ext for Heatmap.csv',
-                     output_name='Combined Ext Heatmap.png',
-                     output_file_type='png',
-                     heatmap_dict=VS.cfgc_heatmap_settings)
+# MSP.heatmap_from_csv(csv_folder='Heatmap CSV',
+#                      csv_file_name='Combined Ext for Heatmap.csv',
+#                      output_name='Combined Ext Heatmap.png',
+#                      output_file_type='png',
+#                      heatmap_dict=VS.cfgc_heatmap_settings)
