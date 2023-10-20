@@ -181,6 +181,7 @@ cfgc_publication_hrms_plot_dict = {'plot_width': 3.2,
                    'stack_headspace': 0,
                    'uniform_scaling': True,
                    'uniform_height': False,
+                   'diff_max': 1.0,
                    'save_output': True}
 
 plot_label_list = ['S2 10% iPrOH in PhMe',

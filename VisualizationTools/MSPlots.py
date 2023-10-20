@@ -55,13 +55,18 @@ def load_single_ms(csv_file_directory,
     return hrms_dict
 
 def create_single_hrms_xy_pairs(hrms_dict,
-                                mw_range = (200, 1000)):
+                                mw_range = (200, 1000),
+                                yaxis_max = 3.0):
     """
     A function that takes a HRMS dictionary of the standard format from BitumenCSVtoDict,
     and converts it into a list of (x, y) tuples for conversion into a visual plot of the spectra
 
     Updated version: include a MW cut-off range to remove artifacts and very low intensity/spuriorus peaks
     200 to 1000 is the default range, but can be changed as needed
+
+    Similarly, a handful of impurities in solvent extraction in low MW range sometimes show up as a huge
+    single peak that throws off y-axis scaling. This can be enforced here as well.
+
     Parameters
     ----------
     hrms_dict : dictionary
@@ -78,7 +83,10 @@ def create_single_hrms_xy_pairs(hrms_dict,
     for specific_ion in hrms_dict:
         curr_fw = CTD.formula_to_mass(specific_ion)
         if curr_fw >= mw_range[0] and curr_fw <= mw_range[1]:
-            hrms_ion_list.append((curr_fw, hrms_dict[specific_ion]))
+            if hrms_dict[specific_ion] > yaxis_max:
+                hrms_ion_list.append((curr_fw, yaxis_max))
+            else:
+                hrms_ion_list.append((curr_fw, hrms_dict[specific_ion]))
     
     return hrms_ion_list
 
@@ -113,11 +121,14 @@ def create_hrms_xy_list(list_of_csv_file_directories,
 
 def create_difference_data(list_of_csv_file_directories,
                            list_of_csv_file_names,
-                           difference_mode):
+                           difference_mode,
+                           hrms_plot_dict):
     """
     A function that takes 2 HRMS .csv files, and creates a third set of data representing the 'difference'
     between the spectra. 3 difference difference modes, 'raw', 'absolute', and 'squared'.
     Returns the third xy data list for plotting as a bar stack.
+    In a handful of cases, a single peak (e.g. solvent impurity) significant throws off the y-axis.
+    A yaxis max can be enforced here, through the hrms_plot_dict.
 
     Parameters
     ----------
@@ -157,24 +168,32 @@ def create_difference_data(list_of_csv_file_directories,
         if first_spectra_key in starting_spec_2:
             difference_dict[first_spectra_key] = compute_function(starting_spec_1[first_spectra_key],
                                                                   starting_spec_2[first_spectra_key])
+            if difference_dict[first_spectra_key] > hrms_plot_dict['diff_max']:
+                difference_dict[first_spectra_key] = hrms_plot_dict['diff_max']
         else:
             difference_dict[first_spectra_key] = compute_function(starting_spec_1[first_spectra_key],
                                                                   0.0)
+            if difference_dict[first_spectra_key] > hrms_plot_dict['diff_max']:
+                difference_dict[first_spectra_key] = hrms_plot_dict['diff_max']
     
     for second_spectra_key in starting_spec_2:
         if second_spectra_key not in difference_dict:
             if second_spectra_key in starting_spec_1:
                 difference_dict[second_spectra_key] = compute_function(starting_spec_1[second_spectra_key],
                                                                        starting_spec_2[second_spectra_key])
+                if difference_dict[second_spectra_key] > hrms_plot_dict['diff_max']:
+                    difference_dict[second_spectra_key] = hrms_plot_dict['diff_max']
             else:
                 difference_dict[second_spectra_key] = compute_function(0.0,
                                                                        starting_spec_2[second_spectra_key])
+                if difference_dict[second_spectra_key] > hrms_plot_dict['diff_max']:
+                    difference_dict[second_spectra_key] = hrms_plot_dict['diff_max']
     
     #Now, process and return xy points for plotting in the desired (typical) stack order
     list_of_xy_data = [create_single_hrms_xy_pairs(starting_spec_1),
                        create_single_hrms_xy_pairs(starting_spec_2),
                        create_single_hrms_xy_pairs(difference_dict)]
-    
+        
     return list_of_xy_data
 
 def return_raw(spectra_1_val,
@@ -346,7 +365,10 @@ def plot_multiple_hrms_stack(list_of_hrms_spectra,
                                         the spacing between tick marks is unchanged. (IE
                                         if one plot has a max y-value of 4, and one has
                                         a value of 3, then the first chart should be 33% taller)
-
+            'yaxis_max' - float. If this is not 'None', then all y-axis will be checked to make
+                                sure they don't go over the max value.
+            'diff_max' - float. If this is not 'None', then the 'difference' y-axis will be
+                                checked to make sure it doesn't exceed the max.
     Returns
     -------
     None, but saves the plot if desired.
@@ -405,6 +427,7 @@ def plot_multiple_hrms_stack(list_of_hrms_spectra,
         
         #Add y-axis headroom so that a label can be appended
         ax_list[position].set_ylim(0, round_ylim)
+
         #Set this plot y-axis label
         ax_list[position].set_ylabel(list_of_yaxis_labels[position],
                                      fontsize=hrms_plot_dict['axis_size'])
@@ -445,7 +468,7 @@ def plot_multiple_hrms_stack(list_of_hrms_spectra,
         ax_list = scale_to_max_y(ax_list,
                                  hrms_plot_dict['ymajor_ticks'],
                                  hrms_plot_dict['yminor_ticks'])            
-        
+
     plt.savefig(output_name,
                 format=output_file_type,
                 facecolor="white",
@@ -795,7 +818,8 @@ def create_ms_difference_stack(list_of_csv_file_directories,
 
     list_of_hrms_spectra = create_difference_data(list_of_csv_file_directories,
                                                   list_of_csv_file_names,
-                                                  difference_mode)
+                                                  difference_mode,
+                                                  hrms_plot_dict)
 
     plot_multiple_hrms_stack(list_of_hrms_spectra,
                              list_of_plot_labels,

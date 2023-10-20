@@ -22,12 +22,12 @@ import torch.nn as nn
 #                                        nested_multiscatter_dict = VS.cfgc_publication_highlight_multiscatter,
 #                                        list_of_cluster_targets = VS.cfgc_publication_single_highlight_multiscatter_list)
 
-MSP.all_solvent_UMAP(multi_scatter_plot_dict = VS.cfgc_publication_multi_multisolvent_scatter_dict,
-                     constant_umap_settings = VS.cfgc_publication_consistent_UMAP_dict,
-                     multisolvent_umap_dict=VS.cfgc_publication_multisolvent_dict,
-                     csv_file_column_list=VS.cfgc_publication_single_highlight_multiscatter_list,
-                     column_dictionary_key=VS.cfgc_publication_multisolvent_label_key,
-                     output_file_name='test_allsolv')
+# MSP.all_solvent_UMAP(multi_scatter_plot_dict = VS.cfgc_publication_multi_multisolvent_scatter_dict,
+#                      constant_umap_settings = VS.cfgc_publication_consistent_UMAP_dict,
+#                      multisolvent_umap_dict=VS.cfgc_publication_multisolvent_dict,
+#                      csv_file_column_list=VS.cfgc_publication_single_highlight_multiscatter_list,
+#                      column_dictionary_key=VS.cfgc_publication_multisolvent_label_key,
+#                      output_file_name='test_allsolv')
 
 # dataset_param_dict = {'sm_file_directory': 'AllCSV',
 #                       'ext_file_directory': 'AllCSV',
@@ -64,35 +64,35 @@ MSP.all_solvent_UMAP(multi_scatter_plot_dict = VS.cfgc_publication_multi_multiso
 #                                       output_name='Starting Material HRMS.png',
 #                                       output_file_type='png')
 
-# fig_2_csv_folder_list = ['./AllCSV/',
-#                         './AllCSV/']
+fig_2_csv_folder_list = ['./AllCSV/',
+                        './AllCSV/']
 
-# fig_2_csv_file_list = ['L1_SM_nar.csv',
-#                       '19243_nar.csv']
+fig_2_csv_file_list = ['L1_SM_nar.csv',
+                      '19242_nar.csv']
 
-# fig_2_plot_label_list = ['A1 SM',
-#                         'After extraction with\n75% AcOH/PhMe',
-#                         'Absolute Difference']
+fig_2_plot_label_list = ['A1 SM',
+                        'After extraction with\n65% AcOH/PhMe',
+                        'Absolute Difference']
 
-# fig_2_yaxis_label_list = ['Ion Intensity (ppt)',
-#                          'Ion Intensity (ppt)',
-#                          '']
+fig_2_yaxis_label_list = ['Intensity (ppt)',
+                         'Intensity (ppt)',
+                         '']
 
-# fig_2_list_of_pal_dict = [VS.standard_blue_pal_dict,
-#                         VS.standard_orange_pal_dict,
-#                         VS.standard_green_pal_dict]
+fig_2_list_of_pal_dict = [VS.standard_blue_pal_dict,
+                        VS.standard_orange_pal_dict,
+                        VS.standard_green_pal_dict]
 
-# fig_2_hrms_plot_dict = VS.cfgc_publication_hrms_plot_dict
+fig_2_hrms_plot_dict = VS.cfgc_publication_hrms_plot_dict
 
-# MSP.create_ms_difference_stack(list_of_csv_file_directories=fig_2_csv_folder_list,
-#                                list_of_csv_file_names=fig_2_csv_file_list,
-#                                list_of_plot_labels=fig_2_plot_label_list,
-#                                list_of_yaxis_labels=fig_2_yaxis_label_list,
-#                                list_of_palette_dicts=fig_2_list_of_pal_dict,
-#                                hrms_plot_dict=fig_2_hrms_plot_dict,
-#                                difference_mode='absolute',
-#                                output_name='extraction_diff_fig2.png',
-#                                output_file_type='png')
+MSP.create_ms_difference_stack(list_of_csv_file_directories=fig_2_csv_folder_list,
+                               list_of_csv_file_names=fig_2_csv_file_list,
+                               list_of_plot_labels=fig_2_plot_label_list,
+                               list_of_yaxis_labels=fig_2_yaxis_label_list,
+                               list_of_palette_dicts=fig_2_list_of_pal_dict,
+                               hrms_plot_dict=fig_2_hrms_plot_dict,
+                               difference_mode='absolute',
+                               output_name='19242_extraction_diff.png',
+                               output_file_type='png')
 
 # diff_plot_labels = ['A1 + 75% AcOH/PhMe',
 #                     'ML Predicted',
