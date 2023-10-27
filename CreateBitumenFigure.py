@@ -67,11 +67,11 @@ import torch.nn as nn
 fig_2_csv_folder_list = ['./AllCSV/',
                         './AllCSV/']
 
-fig_2_csv_file_list = ['L1_SM_nar.csv',
-                      '19242_nar.csv']
+fig_2_csv_file_list = ['S2_SM_nar.csv',
+                      '19224_nar.csv']
 
-fig_2_plot_label_list = ['A1 SM',
-                        'After extraction with\n65% AcOH/PhMe',
+fig_2_plot_label_list = ['A2 SM',
+                        'After extraction with\n20% NEt3/PhMe',
                         'Absolute Difference']
 
 fig_2_yaxis_label_list = ['Intensity (ppt)',
@@ -91,7 +91,7 @@ MSP.create_ms_difference_stack(list_of_csv_file_directories=fig_2_csv_folder_lis
                                list_of_palette_dicts=fig_2_list_of_pal_dict,
                                hrms_plot_dict=fig_2_hrms_plot_dict,
                                difference_mode='absolute',
-                               output_name='19242_extraction_diff.png',
+                               output_name='19224_extraction_diff.png',
                                output_file_type='png')
 
 # diff_plot_labels = ['A1 + 75% AcOH/PhMe',
