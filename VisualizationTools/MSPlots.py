@@ -968,8 +968,13 @@ def create_predicted_vs_actual_stack(dataset_param_dict,
 
     difference_dict = {}
     for formula_tuple in actual_plot_dict:
-        difference_dict[formula_tuple] = compute_function(actual_plot_dict[formula_tuple],
-                                                          predict_plot_dict[formula_tuple])
+        if hrms_plot_dict['diff_max'] == None:
+            difference_dict[formula_tuple] = compute_function(actual_plot_dict[formula_tuple],
+                                                              predict_plot_dict[formula_tuple])
+        else:
+            difference_dict[formula_tuple] = min(compute_function(actual_plot_dict[formula_tuple],
+                                                                   predict_plot_dict[formula_tuple]),
+                                                 hrms_plot_dict['diff_max'])
     
     list_of_xy_data = [create_single_hrms_xy_pairs(actual_plot_dict),
                        create_single_hrms_xy_pairs(predict_plot_dict),
