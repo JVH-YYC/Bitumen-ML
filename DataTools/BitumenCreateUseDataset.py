@@ -161,11 +161,18 @@ def create_extraction_test_via_tis(training_dict,
                                    test_dict,
                                    total_ion_set):
     """
-    
+    A function that creates the necessary __getitem__ list for a test loop. For further statistics,
+    ions are split into their types: 'per' ions are those that persist from the starting material
+    into the extraction; 'app' ions are those that appear in the extraction, even though they were
+    not present in the starting material; 'dis' ions are those that disappear from the starting
+    material upon performing an extraction; oth are ions that are not present in either the starting
+    material, or the test extraction, but were present in the total ion set.
 
     Returns
     -------
-    None.
+    An oriented set of lists - getitem_list and test_targets are aligned, where the ion targeted
+    in getitem_list[idx] has an actual value of test_targets[idx]. test_file_list is a list of
+    the file names that were used in the test set.
 
     """
 
@@ -205,12 +212,15 @@ def expand_extraction_tis_dataset(dataset_dict,
                                   locked_formula_list,
                                   normalization_tuple):
     """
-    
+    An intermediate function that expands the getitem_list to include tensors necessary for the FCNet.
 
     Parameters
     ----------
-    dataset_dict : TYPE
-        DESCRIPTION.
+    dataset_dict : dictionary
+        A dictionary of dictionaries. The top level keys are file names of the original
+        .csv files of MS data. Each key points to a dictionary, which has tuple keys of
+        the form (#C, #H, #N, #O, #S). Those keys have a single entry,
+        the normalized MS intensity of the peak corresponding to that formula.
     getitem_list : TYPE
         DESCRIPTION.
     rectified_condition_dict : TYPE
@@ -697,20 +707,24 @@ def create_tis_extraction_target(entry_filename,
                                  ion_type,
                                  dataset_dict):
     """
-    
+    A function that creates the target value for prediction, using the 'total ion set' method.
 
     Parameters
     ----------
-    entry_filename : TYPE
-        DESCRIPTION.
-    entry_formula_tuple : TYPE
-        DESCRIPTION.
-    dataset_dict : TYPE
-        DESCRIPTION.
-
+    entry_filename : string
+        The name of the .csv file that holds the current point of interest; this is a key for the
+        compiled dataset dictionary
+    entry_formula_tuple : tuple
+        A tuple of the usual format [#C, #H, #N, #O, #S] that is used as a lookup dictionary key
+    dataset_dict : dictionary
+        A dictionary of dictionaries. The top level keys are file names of the original
+        .csv files of MS data. Each key points to a dictionary, which has tuple keys of
+        the form (#C, #H, #N, #O, #S). Those keys have a single entry,
+        the normalized MS intensity of the peak corresponding to that formula.  
+    
     Returns
     -------
-    None.
+    Pytorch tensor that is the target for prediction/training
 
     """
 
@@ -733,24 +747,30 @@ def create_tis_extraction_tensor(entry_filename,
                                  normalization_tuple,
                                  dataset_dict):
     """
-    
+    A function that takes the key extraction parameters, the value of a given ion in the *starting material HRMS*,
+    and creates the Pytorch tensor that is the input for FCNet. This tensor is normalized, and includes the
+    SM value, the extraction conditions, and the intensities of the locked ions in the order they are presented.
 
     Parameters
     ----------
-    entry_filename : TYPE
-        DESCRIPTION.
-    entry_formula_tuple : TYPE
-        DESCRIPTION.
-    rectified_condition_dict : TYPE
-        DESCRIPTION.
-    additional_formula_list : TYPE
-        DESCRIPTION.
-    normalization_tuple : TYPE
-        DESCRIPTION.
+    entry_filename : string
+        The name of the .csv file that holds the current point of interest; this is a key for the
+        compiled dataset dictionary
+    entry_formula_tuple : tuple
+        A tuple of the usual format [#C, #H, #N, #O, #S] that is used as a lookup dictionary key
+    rectified_condition_dict : dictionary
+        A dictionary that connects the file names to standardized extraction conditions.
+    additional_formula_list : list of tuples
+        A list of the formula modifications (i.e. 'formula information gain') that are to be added/substrated
+        from the target ion in the *starting material HRMS*.
+    normalization_tuple : tuple
+        During creation of the dataset, the min/max values for each atom type are calculated and stored
+        in a tuple, this is used to normalize input formula.
 
     Returns
     -------
-    None.
+    The pytorch tensor that is used for an FCNet input. The length of the tensor depends on the number
+    of additional formula included.
 
     """
 
@@ -803,240 +823,7 @@ def create_tis_extraction_tensor(entry_filename,
     complete_tensor = torch.FloatTensor(normalized_formula_array)
     
     return complete_tensor
-
-def create_neighbor_target(target_file_label,
-                           formula_tuple,
-                           full_extraction_dictionary,
-                           file_processing_list,
-                           num_neighbors):
-    """
-    To streamline training, this function is only called once per ion during the creation
-    of the dataset. Following the order of file_processing_list.
-    
-    For the target file that is being considered, this is filled with dummy values of +1
-    and is never the nearest neighbor (give ppt dif of 1000 to be safe)
-
-    Need to use try/except to account for the fact that not all ions will be observed
-    in every training dictionary file
-    
-    In cases where there are (multiple) ties - distribute cross entropy target even
-    further
-    
-    Parameters
-    ----------
-    target_file_label : string
-        The name of the file for the data point being targeted during training/testing
-    formula_tuple : tuple
-        A five position tuple that contains (#C, #H, #N, #O, #S)
-    full_extraction_dictionary : dictionary
-        As created in BitumenCSVtoDict 'open_neighbor_(training/test)_dict'
-    file_processing_list : list
-        An ordered list that contains all of the training files to be compared against for
-        nearest neighbor calculation
-    num_neighbors : integer
-        The desired number of neighbors for comparison
-
-    Returns
-    -------
-    A pytorch tensor with a length equal to the number of files in the processing list, with
-    the true nearest neighbors presented as values of 1/num_neighbors, and all others as zero
-
-    """
-    
-    try:
-        target_actual_value = full_extraction_dictionary[target_file_label][2][formula_tuple]
-    except:
-        target_actual_value = 0.0
-        
-    neighbor_act_distance = []
-    
-    for train_file in file_processing_list:
-        if train_file != target_file_label:
-            try:
-                curr_act_val = full_extraction_dictionary[train_file][2][formula_tuple]
-            except:
-                curr_act_val = 0.0
-                
-            neighbor_act_distance.append(abs(curr_act_val - target_actual_value))
-        else:
-            neighbor_act_distance.append(1000)
-    
-    seq = sorted(neighbor_act_distance)
-    ranks = [seq.index(val) for val in neighbor_act_distance]
-    
-    #Count number of winners including ties
-    
-    act_neighbors = 0
-    for entry in ranks:
-        if entry <= (num_neighbors - 1):
-            act_neighbors = act_neighbors + 1
-        
-    pred_val = (1 / act_neighbors)
-
-    target_list = [pred_val if rank <= (num_neighbors - 1) else 0.0 for rank in ranks ]
-        
-    target_np = np.asarray(target_list)
-    target_tensor = torch.from_numpy(target_np)
-    target_tensor = target_tensor.to(torch.float32)
-
-    return target_tensor    
-
-def create_absolute_neighbor_target(target_file_label,
-                                    formula_tuple,
-                                    full_extraction_dictionary,
-                                    file_processing_list,
-                                    identity_strategy):
-    """
-    To streamline training, this function is only called once per ion during the creation
-    of the dataset. Following the order of file_processing_list.
-    
-    For the target file that is being considered, this is filled with dummy values of +1
-    and is never the nearest neighbor (give ppt dif of 1000 to be safe)
-
-    Need to use try/except to account for the fact that not all ions will be observed
-    in every training dictionary file
-    
-    In cases where there are (multiple) ties - distribute cross entropy target even
-    further
-    
-    Parameters
-    ----------
-    target_file_label : string
-        The name of the file for the data point being targeted during training/testing
-    formula_tuple : tuple
-        A five position tuple that contains (#C, #H, #N, #O, #S)
-    full_extraction_dictionary : dictionary
-        As created in BitumenCSVtoDict 'open_neighbor_(training/test)_dict'
-    file_processing_list : list
-        An ordered list that contains all of the training files to be compared against for
-        nearest neighbor calculation
-    identity_strategy : string ('masked' or 'revealed')
-        During training, one is faced with the problem that the known result could be looked up.
-        This is dealt with 1 of two ways: either the true result is 'masked' and replaced by a dummy
-        entry with *maximum* distance (1,1,1,1,1,1), and the corresponding entry is set to high error.
-        A first trial used 10 as the setting for this error - but then that dominated the loss function.
-        Need to use a high but not dominating value (e.g. 0.1).
-        However, for the absolute neighbor training, if a minimum distance value is 'revealed' as (0,0,0,0,0,0),
-        with an error of 0.0 - this won't break prediction mode, as there will never be a (0,0,0,0,0,0)
-        entry during cross-validation testing. Try both.
-
-    Returns
-    -------
-    A pytorch tensor with a length equal to the number of files in the processing list, with
-    the true nearest neighbors presented as values of 1/num_neighbors, and all others as zero
-
-    """
-    
-    try:
-        target_actual_value = full_extraction_dictionary[target_file_label][2][formula_tuple]
-    except:
-        target_actual_value = 0.0
-        
-    neighbor_act_distance = []
-    
-    for train_file in file_processing_list:
-        if train_file != target_file_label:
-            try:
-                curr_act_val = full_extraction_dictionary[train_file][2][formula_tuple]
-            except:
-                curr_act_val = 0.0
-                
-            neighbor_act_distance.append(abs(curr_act_val - target_actual_value))
-        else:
-            if identity_strategy == 'masked':
-                neighbor_act_distance.append(0.1)
-            elif identity_strategy == 'revealed':
-                neighbor_act_distance.append(0.0)
-            else:
-                raise ValueError('Either "masked" or "revealed" identity_strategy needed')
-            
-    target_np = np.asarray(neighbor_act_distance)
-    target_tensor = torch.from_numpy(target_np)
-    target_tensor = target_tensor.to(torch.float32)
-
-    return target_tensor    
-
-def create_neighbor_tensor(target_file_label,
-                           formula_tuple,
-                           condition_dict,
-                           file_processing_list,
-                           normalization_tuple,
-                           identity_strategy):
-    """
-    To streamline training, this function is only called once per ion during the creation
-    of the dataset. Following the order of file_processing_list.
-    
-    Creates a tensor of length (5 + 6x the length of the file_processing_list)
-    
-    For each entry in the file processing list, it compares the extraction conditions to
-    those of the data point being predicted. For the current file under investigation,
-    its entry is given a placeholder value of max distance (i.e. [1, 1, 1, 1, 1, 1]), as it
-    will always be the 'further' neighbor as designed in create_neighbor_target **not true
-    when using absolute training style**
-    
-    When using traditional nearest neighbors, use 'masked' identity_strategy, when using
-    'absolute' training style, can use either 'revealed' or 'masked'
-    
-    For network training, we also want to know what ion formula we are looking at: perhaps
-    low MW vs high MW, or low sulfur vs high sulfur have a difference sense of 'near'
-
-    
-
-    Parameters
-    ----------
-    target_file_label : TYPE
-        DESCRIPTION.
-    formula_tuple : TYPE
-        DESCRIPTION.
-    condition_dict : TYPE
-        MUST USE RECTIFIED CONDITION DICTIONARY CREATED IN HELPER FUNCTION ABOVE!
-    full_extraction_dictionary : TYPE
-        DESCRIPTION.
-    file_processing_list : TYPE
-        DESCRIPTION.
-    num_neighbors : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    None.
-
-    """
-    
-    min_val_list = []
-    max_val_list = []
-    
-    for entry in normalization_tuple:
-        min_val_list.append(entry[0])
-        max_val_list.append(entry[1])
-    
-    min_val_array = np.asarray(min_val_list)
-    max_val_array = np.asarray(max_val_list)
-    
-    starting_tuple_array = np.asarray(formula_tuple)
-    adjusted_tuple_array = starting_tuple_array - min_val_array
-    normalized_tuple_array = adjusted_tuple_array / max_val_array
-    
-    starting_condition_array = np.asarray(condition_dict[target_file_label])
-    
-    for poss_neighbor in file_processing_list:
-        if poss_neighbor != target_file_label:
-            curr_condition = np.asarray(condition_dict[poss_neighbor])
-            condition_diff = curr_condition - starting_condition_array
-            normalized_tuple_array = np.append(normalized_tuple_array, condition_diff)
-        else:
-            if identity_strategy == 'masked':
-                condition_diff_placeholder = np.asarray([1,1,1,1,1,1])
-            else:
-                condition_diff_placeholder = np.asarray([0,0,0,0,0,0])
-            normalized_tuple_array = np.append(normalized_tuple_array, condition_diff_placeholder)
-    
-    neighbor_tensor = torch.from_numpy(normalized_tuple_array)
-    neighbor_tensor = neighbor_tensor.to(torch.float32)
-    
-    return neighbor_tensor
-
-        
+       
 def report_dataset_distribution(getitem_list):
     """
     A function that takes the list to be used as a __getitem__() call, and reports on
@@ -1046,7 +833,7 @@ def report_dataset_distribution(getitem_list):
     Parameters
     ----------
     getitem_list : list generated by enumerate_extraction_training_dataset() above
-        DESCRIPTION.
+        A list that includes the filename, starting material label, formula tuple, and ion type
 
     Returns
     -------
@@ -1101,7 +888,7 @@ def create_fig_tensor(target_formula,
                       current_formula_adjustments):
     """
     A function that takes a target formula (dictionary key), as well as a list of fragments
-    that are currently being used in FIL searching. It returns a pytorch tensor that *does not*
+    that are currently being used in FIG searching. It returns a pytorch tensor that *does not*
     include the intensity of the target formula - only includes (target + adjustment 1)[intensity],
     (target - adjustment 1)[intensity], etc.
     

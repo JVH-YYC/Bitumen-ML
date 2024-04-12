@@ -6,7 +6,7 @@ Created on Wed May 19 13:58:51 2021
 @author: jvh
 
 Series of functions that turns .csv files of mass spec data into dictionaries
-with tuples of (C, H, N, O, S, Cl, Na)
+with tuples of (C, H, N, O, S)
 
 Simplified to only use peak area / sum of peak areas, only open-ended.
 """
@@ -109,72 +109,6 @@ def define_sm_ext_train(sm_file_directory,
 
     return key_string_list
 
-def define_sm_neighbor_train(sm_file_directory,
-                             ext_file_directory,
-                             label_keys,
-                             condition_dict,
-                             test_list):
-    """
-    A similar function to above, but one that includes additional information to do
-    nearest-neighbor learning. Each file is also associated with its extraction fingerprint
-
-    Parameters
-    ----------
-    sm_file_directory : string
-        Name of directory containing starting materials .csv files
-    ext_file_directory : string
-        Name of directory containing .csv files for extracted materials
-    label_keys : dictionary
-        A dictionary that describes which file names are associated with which
-        starting materials - used to label entries for future organization.
-        Possible labels are 'L1', 'S2', etc. for extracted materials, and
-        'L1_SM', 'S2_SM', etc. for starting materials themselves.
-    condition_dict: dictionary
-        A dictionary that describes the solvent blend used in any given experiment.
-        For starting materials, it has a blank placeholder [0,0,0,0,0,0]
-        Must have identical keys to label_keys dict.
-    test_list : list
-        Name of MS .csv files that are held out of training (either SM or extracted),
-        but, must include all SM that are required for extracted fractions.
-
-    Returns
-    -------
-    A list of lists, where each entry is of the form (label key, fingerprint, file name)
-
-    """
-
-    holdout_strings_sm = [(sm_file_directory + '/' + x) for x in test_list]
-    holdout_strings_ext = [(ext_file_directory + '/' + x) for x in test_list]
-    
-    holdout_strings = holdout_strings_sm + holdout_strings_ext
-    
-    sm_path = Path('.', sm_file_directory)
-    ext_path = Path('.', ext_file_directory)
-    
-    sm_csv_list = list(sm_path.glob('*.csv'))
-    ext_csv_list = list(ext_path.glob('*.csv'))
-       
-    comb_csv_list = sm_csv_list + ext_csv_list
-    
-    comb_str_list = [str(x) for x in comb_csv_list]
-    
-    final_comb_list = [x for x in comb_str_list if x not in holdout_strings]
-    
-    key_string_list = []
-    
-    #Double loop to match keys OK because there are usually only <50 files. Need to change
-    #if every have needs in very large datasets
-    #File key dictionary and extraction condition dictionary must use identical keys!
-    
-    for specific_file in final_comb_list:
-        for specific_key in label_keys.keys():
-            if specific_key in specific_file:
-                key_string_list.append([label_keys[specific_key],
-                                        condition_dict[specific_key],
-                                        specific_file])
-
-    return key_string_list
-    
 def define_sm_ext_test(sm_file_directory,
                        ext_file_directory,
                        label_keys,
@@ -235,70 +169,7 @@ def define_sm_ext_test(sm_file_directory,
                 key_string_list.append([label_keys[specific_key], specific_file])
         
     return key_string_list
-
-def define_sm_neighbor_test(ext_file_directory,
-                            label_keys,
-                            condition_dict,
-                            test_list):
-    """
-    A similar function to above, but one that includes additional information to do
-    nearest-neighbor learning. Each file is also associated with its extraction fingerprint
-
-    This should have *no* SM information, as the test set will always be associated with
-    a training set that has the SM file.    
-
-    This is the complementary function to that described above. The function above loads
-    and organized all files MINUS a holdout list. This function loads ONLY the passed list.
-
-    Parameters
-    ----------
-    ext_file_directory : string
-        Name of directory containing .csv files for extracted materials
-    label_keys : dictionary
-        A dictionary that describes which file names are associated with which
-        starting materials - used to label entries for future organization.
-        Possible labels are 'L1', 'S2', etc. for extracted materials, and
-        'L1_SM', 'S2_SM', etc. for starting materials themselves.
-    condition_dict: dictionary
-        A dictionary that describes the solvent blend used in any given experiment.
-        For starting materials, it has a blank placeholder [0,0,0,0,0,0]
-        Must have identical keys to label_keys dict.
-    test_list : list
-        Name of MS .csv files that are held out of training (either SM or extracted),
-        but, must include all SM that are required for extracted fractions.
-    
-    Returns
-    -------
-    A list of lists, where each entry is of the form (label key, fingerprint, file name)
-
-    """
-    #Hold out no starting materials
-    
-    test_strings_ext = [(ext_file_directory + '/' + x) for x in test_list]
-        
-    ext_path = Path('.', ext_file_directory)
-    
-    ext_csv_list = list(ext_path.glob('*.csv'))
-    
-    ext_test_str = [str(x) for x in ext_csv_list]
-    
-    ext_test_list = [x for x in ext_test_str if x in test_strings_ext]
-                   
-    key_string_list = []
-    
-    #Double loop to match keys OK because there are usually only <50 files. Need to change
-    #if every have needs in very large datasets
-    
-    for specific_file in ext_test_list:
-        for specific_key in label_keys.keys():
-            if specific_key in specific_file:
-                key_string_list.append([label_keys[specific_key],
-                                        condition_dict[specific_key],
-                                        specific_file])
-        
-    return key_string_list
-
-    
+   
 def load_from_list_nar(csv_name_incl_dir):
     """
     A function that loads .csv files that already include the directory name,
@@ -330,7 +201,7 @@ def load_from_list_nar(csv_name_incl_dir):
 def formula_to_tuple(formula_string):
     """
     A function that takes in a molecular formula, and converts it into
-    a tuple of the structure (#C, #H, #N, #O, #S, #Cl, #Na)
+    a tuple of the structure (#C, #H, #N, #O, #S)
 
     Parameters
     ----------
@@ -421,7 +292,6 @@ def return_atom_value(target_atom,
             except:
                 atom_val = int(run_string)
                 return atom_val
-                    
 
 def formula_to_mass(formula_tuple):
     """
@@ -576,61 +446,6 @@ def open_sum_training_dict(sm_file_directory,
         key_ms_dict[file] = (label, curr_dict)
 
     return key_ms_dict
-    
-def open_neighbor_training_dict(sm_file_directory,
-                                ext_file_directory,
-                                label_keys,
-                                condition_dict,
-                                test_list):
-    """
-    A function that creates a dictionary for all .csv files in two directories, with
-    top-level keys being the file name, each holding a tuple with three entries.
-    The first entry is the label corresponding to either the material itself
-    'L1_SM', 'S2_SM', etc. for starting materials, or what starting material
-    an extracted fraction comes from 'L1', 'S2', etc. The second entry is the extraction
-    conditions that led to that extracted fraction. The third entry is
-    the processed MS dictionary. Uses the sum of all observed intensities for
-    normalization, rather than the size of the largest peak.
-
-    Parameters
-    ----------
-    sm_file_directory : string
-        Name of directory containing starting materials .csv files
-    ext_file_directory : string
-        Name of directory containing .csv files for extracted materials
-    label_keys : dictionary
-        A dictionary that describes which file names are associated with which
-        starting materials - used to label entries for future organization.
-        Possible labels are 'L1', 'S2', etc. for extracted materials, and
-        'L1_SM', 'S2_SM', etc. for starting materials themselves.
-    condition_dict : dictionary
-        A dictionary that contains the solvent blend information for all experiments
-        For starting materials, a blank place holder is present [0,0,0,0,0,0]
-        Must have same keys as label_keys dictionary.
-    test_list : list
-        Name of MS .csv files that are held out of training (either SM or extracted),
-        but, must include all SM that are required for extracted fractions.
-
-    Returns
-    -------
-    A dictionary of (key, extraction condition, dictionary) for training extraction predictions
-
-    """
-
-    label_ms_list = define_sm_neighbor_train(sm_file_directory,
-                                             ext_file_directory,
-                                             label_keys,
-                                             condition_dict,
-                                             test_list)
-    key_ms_dict = {}
-
-    for label, conditions, file in label_ms_list:
-        mass_spec_frame = load_from_list_nar(file)
-        curr_dict = single_sum_dict(mass_spec_frame)
-        key_ms_dict[file] = (label, conditions, curr_dict)
-
-    return key_ms_dict
-
 
 def open_sum_test_dict(sm_file_directory,
                        ext_file_directory,
@@ -678,54 +493,6 @@ def open_sum_test_dict(sm_file_directory,
 
     return key_ms_dict
 
-def open_neighbor_test_dict(sm_file_directory,
-                            ext_file_directory,
-                            label_keys,
-                            condition_dict,
-                            test_list):
-    """
-    As above - in this case, returns (rather than excludes) the test list 
-    SM file should be *excluded* from the dictionary - test dictionary will
-    always be associated with a training dictionary that contains the SM file
-
-    Parameters
-    ----------
-    sm_file_directory : string
-        Name of directory containing starting materials .csv files
-    ext_file_directory : string
-        Name of directory containing .csv files for extracted materials
-    label_keys : dictionary
-        A dictionary that describes which file names are associated with which
-        starting materials - used to label entries for future organization.
-        Possible labels are 'L1', 'S2', etc. for extracted materials, and
-        'L1_SM', 'S2_SM', etc. for starting materials themselves.
-    condition_dict : dictionary
-        A dictionary that contains the solvent blend information for all experiments
-        For starting materials, a blank place holder is present [0,0,0,0,0,0]
-        Must have same keys as label_keys dictionary.
-    test_list : list
-        Name of MS .csv files that are held out of training (either SM or extracted),
-        but, must include all SM that are required for extracted fractions.
-
-    Returns
-    -------
-    A dictionary of (key, extraction condition, dictionary) for training extraction predictions
-
-    """
-
-    label_ms_list = define_sm_neighbor_test(ext_file_directory,
-                                            label_keys,
-                                            condition_dict,
-                                            test_list)
-    key_ms_dict = {}
-
-    for label, conditions, file in label_ms_list:
-        mass_spec_frame = load_from_list_nar(file)
-        curr_dict = single_sum_dict(mass_spec_frame)
-        key_ms_dict[file] = (label, conditions, curr_dict)
-
-    return key_ms_dict
-
 def get_sm_sum(test_dataset,
                sm_name,
                formula_tuple):
@@ -755,38 +522,7 @@ def get_sm_sum(test_dataset,
         if sm_name in try_top_level:
             formula_value = test_dataset.test_dictionary[try_top_level][1][formula_tuple]
     
-    return formula_value
-
-def get_sm_sum_neighbor(dataset,
-                        sm_name,
-                        formula_tuple):
-    """
-    A function essentially identical to that above, adjusted for the fact that nearest
-    neighbor training has slightly different dictionary structure.
-
-    sm_name call must include '_SM' in call otherwise an extraction MS may be called
-
-    Parameters
-    ----------
-    dataset : TYPE
-        DESCRIPTION.
-    sm_name : string
-        Name of the starting material being called
-    formula_tuple : tuple
-        A tuple of the usual formula (#C, #H, #N, #O, #S)
-
-    Returns
-    -------
-    The value of the given formula in the starting material
-
-    """
-    
-    for try_top_level in dataset.ion_dictionary.keys():
-        if sm_name in try_top_level:
-            formula_value = np.float32(dataset.ion_dictionary[try_top_level][2][formula_tuple])
-    
-    return formula_value
-    
+    return formula_value  
     
 label_keys = {'L1_SM': 'L1_SM',
               'S2_SM': 'S2_SM',
