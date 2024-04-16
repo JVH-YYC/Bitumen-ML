@@ -308,56 +308,6 @@ class FCExtNet(nn.Module):
         
         return nn.Sequential(*layers)
 
-class NeighborExtNet(nn.Module):
-    def __init__(self,
-                 layer_size_list,
-                 file_processing_list,
-                 batch_norm,
-                 softmax,
-                 activation,
-                 dropout_amt):
-        super(NeighborExtNet, self).__init__()
-        self.layer_size_list = layer_size_list
-        self.file_processing_list = file_processing_list
-        self.batch_norm = batch_norm
-        self.softmax = softmax
-        self.activation = activation
-        self.dropout_amt = dropout_amt
-        
-        self.fc_layers = self.create_neighbor_net()
-        
-    def forward(self,
-                neighbor_tensor):
-        prediction_tens = self.fc_layers(neighbor_tensor)
-        return prediction_tens
-        
-    def create_neighbor_net(self):
-        layers = []
-        current_width = 5 + (len(self.file_processing_list) * 6)
-
-        #Build layers. Layer_size_list only includes the sizes of
-        #the intermediate layers. The starting a final sizes are
-        #set by the length of file_processing_list
-        
-        for new_layer in self.layer_size_list:
-            layers.append(FCLayer(current_width,
-                          new_layer,
-                          self.batch_norm,
-                          False,
-                          self.activation,
-                          self.dropout_amt))
-            current_width = new_layer
-        
-        #Append final layer
-        layers.append(FCLayer(current_width,
-                              len(self.file_processing_list),
-                              False,
-                              self.softmax,
-                              None,
-                              0.0))
-                
-        return nn.Sequential(*layers)
-
 def load_fig_network(trained_net_directory,
                      trained_net_name,
                      net_param_dict,
@@ -418,7 +368,7 @@ def load_extraction_network(trained_net_directory,
                             eval_or_train_data):
     """
     Loads a pre-trained network of the shape/type according to net parameter dict. This is
-    for formula information gain networks, so uses the appropriate network constructor.
+    for prior (before TIS) NN approach, so uses the appropriate network constructor.
 
     Parameters
     ----------
@@ -473,7 +423,7 @@ def load_extraction_tis_network(trained_net_directory,
                                 locked_formula_list):
     """
     Loads a pre-trained network of the shape/type according to net parameter dict. This is
-    for formula information gain networks, so uses the appropriate network constructor.
+    for the 'total ion set' approach, so uses the appropriate network constructor.
 
     Parameters
     ----------
@@ -520,53 +470,6 @@ def load_extraction_tis_network(trained_net_directory,
     
     return new_network
 
-
-def load_neighbor_network(trained_net_directory,
-                          trained_net_name,
-                          trained_net_param,
-                          neighbor_dataset):
-    """
-    
-
-    Parameters
-    ----------
-    trained_net_directory : TYPE
-        DESCRIPTION.
-    trained_net_name : TYPE
-        DESCRIPTION.
-    trained_net_param : TYPE
-        DESCRIPTION.
-    neighbor_dataset : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    A NeighborExtNet loaded with trained settings
-
-    """
-    
-    new_network = NeighborExtNet(trained_net_param['layer_size_list'],
-                                 neighbor_dataset.file_processing_list,
-                                 trained_net_param['batch_norm'],
-                                 trained_net_param['softmax'],
-                                 trained_net_param['activation'],
-                                 trained_net_param['dropout_amt'])
-    
-    dictionary_path = Path('.', trained_net_directory)
-    train_dict = torch.load(dictionary_path / trained_net_name, map_location=torch.device('cpu'))
-    
-    new_train_dict = OrderedDict()
-    for name, value in train_dict.items():
-        if name[:6] == 'module':
-            new_name = name[7:]
-            new_train_dict[new_name] = value
-        else:
-            new_train_dict[name] = value
-    
-    new_network.load_state_dict(new_train_dict)
-    
-    return new_network
-    
 class FIGTrainingData(Dataset):
     def __init__(self,
                  sm_file_directory,
@@ -851,6 +754,9 @@ class BitumenExtTISDataset(Dataset):
         """
         Creates Pytorch Dataset object for MS extraction training based on relationship between domain-expertise
         identified MS formula.
+        For simplicity, training and test dictionaries are created at the outset and held in the same dataset object,
+        with the training dictionary being accessed by the __getitem__ function. The test dictionary does not need
+        to be accessed in training loops (obviously), so it doesn't need to be part of __getitem__.
 
         Parameters
         ----------
@@ -954,151 +860,6 @@ class BitumenExtTISDataset(Dataset):
         print('With', zero_ions, 'zero ion targets')
         return
 
-class NeighborExtFullDataset(Dataset):
-    def __init__(self,
-                 sm_file_directory,
-                 ext_file_directory,
-                 label_keys,
-                 condition_dict,
-                 test_list,
-                 num_neighbors,
-                 training_style,
-                 identity_strategy,
-                 output_name,
-                 pickle_output,
-                 load_pickled_fpl,
-                 pickle_file_directory,
-                 pickle_file_name):
-        """
-        
-
-        Parameters
-        ----------
-        sm_file_directory : TYPE
-            DESCRIPTION.
-        ext_file_directory : TYPE
-            DESCRIPTION.
-        label_keys : TYPE
-            DESCRIPTION.
-        condition_dict : TYPE
-            DESCRIPTION.
-        test_list : TYPE
-            DESCRIPTION.
-        num_neighbors : TYPE
-            DESCRIPTION.
-        training_style : string
-            if 'absolute' is used, then the dataset is looking to *minimize* the predicted variance
-            between a given point and a given neighbor - as opposed to the normal training, where we
-            are trying to *maximize* the chances that a given neighbor is the most accurate.
-        output_name : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        None.
-
-        """
-
-        self.sm_file_directory = sm_file_directory
-        self.ext_file_directory = ext_file_directory
-        self.label_keys = label_keys
-        self.condition_dict = condition_dict
-        self.test_list = test_list
-        self.num_neighbors = num_neighbors
-        self.training_style = training_style
-        self.identity_strategy = identity_strategy
-        self.output_name = output_name
-        self.load_pickled_fpl = load_pickled_fpl
-        self.pickle_file_directory = pickle_file_directory
-        self.pickle_file_name = pickle_file_name
-        
-        self.training_dict = CTD.open_neighbor_training_dict(sm_file_directory,
-                                                             ext_file_directory,
-                                                             label_keys,
-                                                             condition_dict,
-                                                             test_list)
-        
-        self.test_dict = CTD.open_neighbor_test_dict(sm_file_directory,
-                                                     ext_file_directory,
-                                                     label_keys,
-                                                     condition_dict,
-                                                     test_list)
-        
-        self.total_ion_set, self.normalization_tuple = CUD.create_total_ion_set(self.training_dict,
-                                                                                output_name,
-                                                                                pickle_output)
-        
-        self.small_getitem, self.file_processing_list, self.observed_ion_dict = CUD.create_neighbor_set_via_tis(self.training_dict,
-                                                                                                                self.total_ion_set,
-                                                                                                                output_name)
-        self.small_test_getitem, self.test_target_list, self.test_file_list = CUD.create_neighbor_test_via_tis(self.training_dict,
-                                                                                                               self.test_dict,
-                                                                                                               self.total_ion_set) 
-        
-        self.rectified_condition_dict = CUD.rectify_condition_dict(condition_dict,
-                                                                   [self.file_processing_list,
-                                                                    self.test_file_list])
-        
-        if load_pickled_fpl == True:
-            self.update_file_processing_list_via_pickle(pickle_file_directory,
-                                                        pickle_file_name)
-        
-        self.full_getitem = CUD.expand_neighbor_getitem(self.training_dict,
-                                                        self.small_getitem,
-                                                        self.rectified_condition_dict,
-                                                        self.file_processing_list,
-                                                        self.normalization_tuple,
-                                                        num_neighbors,
-                                                        self.training_style,
-                                                        identity_strategy)
-
-        self.full_test_getitem = CUD.expand_neighbor_test_getitem(self.training_dict,
-                                                                  self.small_test_getitem,
-                                                                  self.rectified_condition_dict,
-                                                                  self.file_processing_list,
-                                                                  self.normalization_tuple,
-                                                                  identity_strategy)
-
-    def __len__(self):
-        return len(self.full_getitem)
-    
-    def __getitem__(self,
-                    idx):
-        input_tensor = self.full_getitem[idx][4]
-        target_tensor = self.full_getitem[idx][5]
-        
-        return input_tensor, target_tensor
-
-    def update_file_processing_list_via_pickle(self,
-                                               pickle_file_directory,
-                                               pickle_file_name):
-        """
-        A function that takes a pickled file processing list, and updates the dataset so that
-        the order of data points added to a tensor is consistent.
-
-        Parameters
-        ----------
-        pickle_file_directory : TYPE
-            DESCRIPTION.
-        pickle_file_name : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        None.
-
-        """
-
-        pickle_path = Path('.', pickle_file_directory)
-        pickle_path_full = os.path.join(pickle_path, pickle_file_name)
-        pickle_file = open(pickle_path_full, 'rb')
-        
-        new_fpl = list(pickle.load(pickle_file))
-        
-        self.file_processing_list = new_fpl
-        
-        return
-
 class BitumenExtTestData(Dataset):
     def __init__(self,
                  sm_file_directory,
@@ -1199,7 +960,6 @@ class BitumenExtTestData(Dataset):
 
     def return_curr_formula(self):
         return self.current_test_formula
-
     
 def val_train_indices(dataset,
                       val_split,
@@ -1240,7 +1000,7 @@ def test_train_val_split(dataset,
                          shuffle=True):
     """
     Function to shuffle dataset and split into training/testing/validation. For cases
-    where not enough MS exist to completely split out full spectra for final validation.
+    where test set is not split out during dataset generation (depreciated).
 
     Parameters
     ----------
@@ -1351,7 +1111,6 @@ def multi_loss_and_optim(network,
                                                     verbose=True)
     
     return loss_function, optimize, lr_sched
-
         
 def update_formula(training_dataset,
                    update_formula,
@@ -1359,7 +1118,7 @@ def update_formula(training_dataset,
     """
     A function that takes a training_dataset, and updates its current_formula
     list to include all locked_formula plus and minus the update_formula, and avoids
-    duplicate formula, as well as (0,0,0,0,0,0,0)/(0,0,0,0,0), which would be cheating - it would
+    duplicate formula, as well as (0,0,0,0,0), which would be cheating - it would
     allow the answer to be looked up directly.
 
     Parameters
@@ -1398,12 +1157,12 @@ def update_formula(training_dataset,
         known_array = np.asarray(known_formula)
         pos_array = known_array + update_array
         pos_tuple = tuple(pos_array)
-        if pos_tuple != (0, 0, 0, 0, 0) and pos_tuple != (0, 0, 0, 0, 0, 0, 0):
+        if pos_tuple != (0, 0, 0, 0, 0):
             new_frag_list.append(pos_tuple)
         
         neg_array = known_array - update_array
         neg_tuple = tuple(neg_array)
-        if neg_tuple != (0, 0, 0, 0, 0) and neg_tuple != (0, 0, 0, 0, 0, 0, 0):
+        if neg_tuple != (0, 0, 0, 0, 0):
             new_frag_list.append(neg_tuple)
     
     #Remove duplicates via set
@@ -1412,378 +1171,203 @@ def update_formula(training_dataset,
     training_dataset.set_test_formula(final_frag_list)
     return
 
-def train_neighbor_network(network,
-                           dataset,
-                           val_split,
-                           test_split,
-                           training_epochs,
-                           batch_size,
-                           learning_rate,
-                           lr_patience,
-                           es_patience):
-    """
-    Training loop for learning to predict which extractions are 'nearest neighbors'
-    on a *per-ion/formula* basis
+# Old training loops below here. Updated/finalized ML workflows are not found in
+# 'BitumenWorkflows.py'
 
-    Parameters
-    ----------
-    network : NeighborExtNet as above
-        Fully connected neural network for training
-    dataset : NeighborExtTrainDataset as above
-        Dataset containing open-ended MS training values with 'nearest neighbor' as target
-    val_split : float
-        Number betwee 0-1, fraction of examples to be used in validation loop. Final test set
-        is held out by putting the .csv and .pkl files in separate folders from training/validation data
-    training_epochs : integer
-        Number of epochs of training to attempt
-    batch_size : integer
-        Batch size for training (and validation)
-    learning_rate : float
-        Initial learning rate
-    lr_patience : integer
-        Number of epochs to wait for improvement before reducing learning rate
-    es_patience : integer
-        Number of epochs to wait for improvement before early stopping
+# def train_network_end2end(network,
+#                           dataset,
+#                           val_split,
+#                           test_split,
+#                           training_epochs,
+#                           batch_size,
+#                           learning_rate,
+#                           lr_patience,
+#                           es_patience):
+#     """
+#     Training loop for fully connected bitumen MS data processing
+#     Returns validation loss, state dictionary, and formula list
+#     After full training loop, the state_dict and formula list are saved/pickled
+#     This is for a single set of formula - formula are determined in outside loop
 
-    Returns
-    -------
-    The best test loss, state dictionary, and returns the network
+#     Parameters
+#     ----------
+#     network : FCExtNet as above
+#         Fully connected neural network for training
+#     dataset : LabelledMSSet as above
+#         Dataset containing open-ended MS training values with starting material labels attached
+#     possible_formula : list
+#         A list of reasonable formula that have been identified as possibilities and are actively
+#         searched for when building fully-connected networks. Each entry is a tuple
+#         of the standard type (#C, #H, #N, #O, #S)
+#     val_split : float
+#         Number betwee 0-1, fraction of examples to be used in validation loop. Final test set
+#         is held out by putting the .csv and .pkl files in separate folders from training/validation data
+#     training_epochs : integer
+#         Number of epochs of training to attempt
+#     batch_size : integer
+#         Batch size for training (and validation)
+#     learning_rate : float
+#         Initial learning rate
+#     lr_patience : integer
+#         Number of epochs to wait for improvement before reducing learning rate
+#     es_patience : integer
+#         Number of epochs to wait for improvement before early stopping
 
-    """
-    train_index, val_index, test_index = test_train_val_split(dataset,
-                                                              val_split,
-                                                              test_split)
+#     Returns
+#     -------
+#     The best validation loss, state dictionary, and MS formula being used
 
-    train_sample = SubsetRandomSampler(train_index)
-    val_sample = SubsetRandomSampler(val_index)
-    test_sample = SubsetRandomSampler(test_index)
-
-    train_loader = torch.utils.data.DataLoader(dataset,
-                                               batch_size=batch_size,
-                                               sampler=train_sample)
-
-    val_loader = torch.utils.data.DataLoader(dataset,
-                                             batch_size=batch_size,
-                                             sampler=val_sample)
-
-    test_loader = torch.utils.data.DataLoader(dataset,
-                                              batch_size=batch_size,
-                                              sampler=test_sample)
-
-    num_batches = len(train_loader)
-    loss_func, optimize, lr_sched = multi_loss_and_optim(network,
-                                                         learning_rate,
-                                                         lr_patience)
-
-    training_start = time.time()
-
-    best_val_loss = 1000.0
-    current_patience = es_patience
+#     """        
     
-    if torch.cuda.is_available() == True:
-        device = 'cuda'
-        if torch.cuda.device_count() > 1:
-            print('Multiple GPU Detected')
-            network = nn.DataParallel(network)
-    elif torch.backends.mps.is_available() == True:
-        device = 'mps'
-    else:
-        raise ValueError('No GPU available')
+#     train_index, val_index, test_index = test_train_val_split(dataset,
+#                                                               val_split,
+#                                                               test_split)
+
+#     train_sample = SubsetRandomSampler(train_index)
+#     val_sample = SubsetRandomSampler(val_index)
+#     test_sample = SubsetRandomSampler(test_index)
+
+#     train_loader = torch.utils.data.DataLoader(dataset,
+#                                                batch_size=batch_size,
+#                                                sampler=train_sample)
+
+#     val_loader = torch.utils.data.DataLoader(dataset,
+#                                              batch_size=batch_size,
+#                                              sampler=val_sample)
+
+#     test_loader = torch.utils.data.DataLoader(dataset,
+#                                               batch_size=batch_size,
+#                                               sampler=test_sample)
+
+#     num_batches = len(train_loader)
+#     loss_func, optimize, lr_sched = loss_and_optim(network,
+#                                                    learning_rate,
+#                                                    lr_patience)
+
+#     training_start = time.time()
+
+#     best_val_loss = 1000.0
+#     current_patience = es_patience
     
-    network.to(device)
+#     if torch.cuda.is_available() == True:
+#         device = 'cuda'
+#         if torch.cuda.device_count() > 1:
+#             print('Multiple GPU Detected')
+#             network = nn.DataParallel(network)
+#     elif torch.backends.mps.is_available() == True:
+#         device = 'mps'
+#     else:
+#         raise ValueError('No GPU available')
     
-    for epoch in range(training_epochs):
-        current_loss = 0.0
-        epoch_time = time.time()
+#     network.to(device)
+    
+#     for epoch in range(training_epochs):
+#         current_loss = 0.0
+#         epoch_time = time.time()
         
-        for index, data in enumerate(train_loader):
-            neighbor_example_tensor, example_target = data
-            example_target = example_target.to(device)
-            # example_target = example_target.long()
-            neighbor_example_tensor = neighbor_example_tensor.to(device)
+#         for index, data in enumerate(train_loader):
+#             sm_example_tensor, example_target, condition_tensor = data
+#             #Shape targets
+#             example_target = example_target.view(-1, 1)
             
-            optimize.zero_grad()
+#             sm_example_tensor = sm_example_tensor.to(device)
+#             example_target = example_target.to(device)
+#             condition_tensor = condition_tensor.to(device)
             
-            output = network(neighbor_example_tensor)
-            loss_amount = loss_func(output, example_target)
-            loss_amount = loss_amount.float()
-            loss_amount.backward()
-            optimize.step()
+#             optimize.zero_grad()
             
-            current_loss += float(loss_amount.item())
+#             output = network(sm_example_tensor,
+#                              condition_tensor)
+#             loss_amount = loss_func(output, example_target.float())
+#             loss_amount = loss_amount.float()
+#             loss_amount.backward()
+#             optimize.step()
             
-        print("Epoch {}, training_loss: {:.5f}, took: {:.2f}s".format(epoch+1, current_loss / num_batches, time.time() - epoch_time))
+#             current_loss += float(loss_amount.item())
+            
+#         print("Epoch {}, training_loss: {:.5f}, took: {:.2f}s".format(epoch+1, current_loss / num_batches, time.time() - epoch_time))
 
-        #At end of epoch, try validation set on GPU
+#         #At end of epoch, try validation set on GPU
         
-        total_val_loss = 0
-        network.eval()
-        with torch.no_grad():
-            for val_nn_tensor, val_target in val_loader:
+#         total_val_loss = 0
+#         network.eval()
+#         with torch.no_grad():
+#             for val_sm_tensor, val_target, val_cond_tensor in val_loader:
+#                 val_target = val_target.view(-1, 1)
 
-                #Send data to GPU
-                val_nn_tensor = val_nn_tensor.to(device)
-                val_target = val_target.to(device)
-                # val_target = val_target.long()
+#                 #Send data to GPU
+#                 val_sm_tensor = val_sm_tensor.to(device)
+#                 val_target = val_target.to(device)
+#                 val_cond_tensor = val_cond_tensor.to(device)
                 
-                #Forward pass only
-                val_output = network(val_nn_tensor)
-                val_loss_size = loss_func(val_output, val_target)
-                total_val_loss += float(val_loss_size.item())
+#                 #Forward pass only
+#                 val_output = network(val_sm_tensor,
+#                                      val_cond_tensor)
+#                 val_loss_size = loss_func(val_output, val_target)
+#                 total_val_loss += float(val_loss_size.item())
         
-            print("Val loss = {:.4f}".format(total_val_loss / len(val_loader)))
-            val_loss = total_val_loss / len(val_loader)
+#             print("Val loss = {:.4f}".format(total_val_loss / len(val_loader)))
+#             val_loss = total_val_loss / len(val_loader)
         
-        if val_loss <= best_val_loss:
-            best_val_loss = val_loss
-            current_best_state_dict = network.state_dict()
-            current_best_epoch = epoch+1
-            current_patience = es_patience
-        else:
-            current_patience = current_patience - 1
+#         if val_loss <= best_val_loss:
+#             best_val_loss = val_loss
+#             current_best_state_dict = network.state_dict()
+#             current_best_epoch = epoch+1
+#             current_patience = es_patience
+#         else:
+#             current_patience = current_patience - 1
         
-        if current_patience == 0 or (time.time() - training_start) > 84600.0:
-            print('Early stopping/timeout engaged at epoch: ', epoch + 1)
-            print('Best results at epoch: ', current_best_epoch)
-            print("Training finished, took {:.2f}s".format(time.time() - training_start))
-            total_test_loss = 0
-            network.eval()
-            with torch.no_grad():
-                for test_nn_tensor, test_target in test_loader:
+#         if current_patience == 0 or (time.time() - training_start) > 84600.0:
+#             print('Early stopping/timeout engaged at epoch: ', epoch + 1)
+#             print('Best results at epoch: ', current_best_epoch)
+#             print("Training finished, took {:.2f}s".format(time.time() - training_start))
+#             total_test_loss = 0
+#             network.eval()
+#             with torch.no_grad():
+#                 for test_sm_tensor, test_target, test_cond_tensor in test_loader:
+#                     test_target = test_target.view(-1, 1)
         
-                    #Send data to GPU
-                    test_nn_tensor = test_nn_tensor.to(device)
-                    test_target = test_target.to(device)
-                    # test_target = test_target.long()
+#                     #Send data to GPU
+#                     test_sm_tensor = test_sm_tensor.to(device)
+#                     test_target = test_target.to(device)
+#                     test_cond_tensor = test_cond_tensor.to(device)
                     
-                    #Forward pass only
-                    test_output = network(test_nn_tensor)
-                    test_loss_size = loss_func(test_output, test_target)
-                    total_test_loss += float(test_loss_size.item())
+#                     #Forward pass only
+#                     test_output = network(test_sm_tensor,
+#                                          test_cond_tensor)
+#                     test_loss_size = loss_func(test_output, test_target)
+#                     total_test_loss += float(test_loss_size.item())
                     
-                    test_loss = total_test_loss / len(test_loader)
+#                     test_loss = total_test_loss / len(test_loader)
         
-            return test_loss, current_best_state_dict, network
+#             return test_loss, current_best_state_dict
         
-        lr_sched.step(val_loss)
-        network.train()
+#         lr_sched.step(val_loss)
+#         network.train()
     
-    print("Training finished, took {:.4f}s".format(time.time() - training_start))
-    print('Best results at epoch: ', current_best_epoch)
+#     print("Training finished, took {:.4f}s".format(time.time() - training_start))
+#     print('Best results at epoch: ', current_best_epoch)
 
-    total_test_loss = 0
-    network.eval()
-    with torch.no_grad():
-        for test_nn_tensor, test_target in test_loader:
+#     total_test_loss = 0
+#     network.eval()
+#     with torch.no_grad():
+#         for test_sm_tensor, test_target, test_cond_tensor in test_loader:
+#             test_target = test_target.view(-1, 1)
 
-            #Send data to GPU
-            test_nn_tensor = test_nn_tensor.to(device)
-            test_target = test_target.to(device)
-            # test_target = test_target.long()
+#             #Send data to GPU
+#             test_sm_tensor = test_sm_tensor.to(device)
+#             test_target = test_target.to(device)
+#             test_cond_tensor = test_cond_tensor.to(device)
             
-            #Forward pass only
-            test_output = network(test_nn_tensor)
-            test_loss_size = loss_func(test_output, test_target)
-            total_test_loss += float(test_loss_size.item())
+#             #Forward pass only
+#             test_output = network(test_sm_tensor,
+#                                  test_cond_tensor)
+#             test_loss_size = loss_func(test_output, test_target)
+#             total_test_loss += float(test_loss_size.item())
             
-            test_loss = total_test_loss / len(test_loader)
+#             test_loss = total_test_loss / len(test_loader)
 
-    return test_loss, current_best_state_dict
-
-def train_network_end2end(network,
-                          dataset,
-                          val_split,
-                          test_split,
-                          training_epochs,
-                          batch_size,
-                          learning_rate,
-                          lr_patience,
-                          es_patience):
-    """
-    Training loop for fully connected bitumen MS data processing
-    Returns validation loss, state dictionary, and formula list
-    After full training loop, the state_dict and formula list are saved/pickled
-    This is for a single set of formula - formula are determined in outside loop
-
-    Parameters
-    ----------
-    network : FCExtNet as above
-        Fully connected neural network for training
-    dataset : LabelledMSSet as above
-        Dataset containing open-ended MS training values with starting material labels attached
-    possible_formula : list
-        A list of reasonable formula that have been identified as possibilities and are actively
-        searched for when building fully-connected networks. Each entry is a tuple
-        of the standard type (#C, #H, #N, #O, #S)
-    val_split : float
-        Number betwee 0-1, fraction of examples to be used in validation loop. Final test set
-        is held out by putting the .csv and .pkl files in separate folders from training/validation data
-    training_epochs : integer
-        Number of epochs of training to attempt
-    batch_size : integer
-        Batch size for training (and validation)
-    learning_rate : float
-        Initial learning rate
-    lr_patience : integer
-        Number of epochs to wait for improvement before reducing learning rate
-    es_patience : integer
-        Number of epochs to wait for improvement before early stopping
-
-    Returns
-    -------
-    The best validation loss, state dictionary, and MS formula being used
-
-    """        
-    
-    train_index, val_index, test_index = test_train_val_split(dataset,
-                                                              val_split,
-                                                              test_split)
-
-    train_sample = SubsetRandomSampler(train_index)
-    val_sample = SubsetRandomSampler(val_index)
-    test_sample = SubsetRandomSampler(test_index)
-
-    train_loader = torch.utils.data.DataLoader(dataset,
-                                               batch_size=batch_size,
-                                               sampler=train_sample)
-
-    val_loader = torch.utils.data.DataLoader(dataset,
-                                             batch_size=batch_size,
-                                             sampler=val_sample)
-
-    test_loader = torch.utils.data.DataLoader(dataset,
-                                              batch_size=batch_size,
-                                              sampler=test_sample)
-
-    num_batches = len(train_loader)
-    loss_func, optimize, lr_sched = loss_and_optim(network,
-                                                   learning_rate,
-                                                   lr_patience)
-
-    training_start = time.time()
-
-    best_val_loss = 1000.0
-    current_patience = es_patience
-    
-    if torch.cuda.is_available() == True:
-        device = 'cuda'
-        if torch.cuda.device_count() > 1:
-            print('Multiple GPU Detected')
-            network = nn.DataParallel(network)
-    elif torch.backends.mps.is_available() == True:
-        device = 'mps'
-    else:
-        raise ValueError('No GPU available')
-    
-    network.to(device)
-    
-    for epoch in range(training_epochs):
-        current_loss = 0.0
-        epoch_time = time.time()
-        
-        for index, data in enumerate(train_loader):
-            sm_example_tensor, example_target, condition_tensor = data
-            #Shape targets
-            example_target = example_target.view(-1, 1)
-            
-            sm_example_tensor = sm_example_tensor.to(device)
-            example_target = example_target.to(device)
-            condition_tensor = condition_tensor.to(device)
-            
-            optimize.zero_grad()
-            
-            output = network(sm_example_tensor,
-                             condition_tensor)
-            loss_amount = loss_func(output, example_target.float())
-            loss_amount = loss_amount.float()
-            loss_amount.backward()
-            optimize.step()
-            
-            current_loss += float(loss_amount.item())
-            
-        print("Epoch {}, training_loss: {:.5f}, took: {:.2f}s".format(epoch+1, current_loss / num_batches, time.time() - epoch_time))
-
-        #At end of epoch, try validation set on GPU
-        
-        total_val_loss = 0
-        network.eval()
-        with torch.no_grad():
-            for val_sm_tensor, val_target, val_cond_tensor in val_loader:
-                val_target = val_target.view(-1, 1)
-
-                #Send data to GPU
-                val_sm_tensor = val_sm_tensor.to(device)
-                val_target = val_target.to(device)
-                val_cond_tensor = val_cond_tensor.to(device)
-                
-                #Forward pass only
-                val_output = network(val_sm_tensor,
-                                     val_cond_tensor)
-                val_loss_size = loss_func(val_output, val_target)
-                total_val_loss += float(val_loss_size.item())
-        
-            print("Val loss = {:.4f}".format(total_val_loss / len(val_loader)))
-            val_loss = total_val_loss / len(val_loader)
-        
-        if val_loss <= best_val_loss:
-            best_val_loss = val_loss
-            current_best_state_dict = network.state_dict()
-            current_best_epoch = epoch+1
-            current_patience = es_patience
-        else:
-            current_patience = current_patience - 1
-        
-        if current_patience == 0 or (time.time() - training_start) > 84600.0:
-            print('Early stopping/timeout engaged at epoch: ', epoch + 1)
-            print('Best results at epoch: ', current_best_epoch)
-            print("Training finished, took {:.2f}s".format(time.time() - training_start))
-            total_test_loss = 0
-            network.eval()
-            with torch.no_grad():
-                for test_sm_tensor, test_target, test_cond_tensor in test_loader:
-                    test_target = test_target.view(-1, 1)
-        
-                    #Send data to GPU
-                    test_sm_tensor = test_sm_tensor.to(device)
-                    test_target = test_target.to(device)
-                    test_cond_tensor = test_cond_tensor.to(device)
-                    
-                    #Forward pass only
-                    test_output = network(test_sm_tensor,
-                                         test_cond_tensor)
-                    test_loss_size = loss_func(test_output, test_target)
-                    total_test_loss += float(test_loss_size.item())
-                    
-                    test_loss = total_test_loss / len(test_loader)
-        
-            return test_loss, current_best_state_dict
-        
-        lr_sched.step(val_loss)
-        network.train()
-    
-    print("Training finished, took {:.4f}s".format(time.time() - training_start))
-    print('Best results at epoch: ', current_best_epoch)
-
-    total_test_loss = 0
-    network.eval()
-    with torch.no_grad():
-        for test_sm_tensor, test_target, test_cond_tensor in test_loader:
-            test_target = test_target.view(-1, 1)
-
-            #Send data to GPU
-            test_sm_tensor = test_sm_tensor.to(device)
-            test_target = test_target.to(device)
-            test_cond_tensor = test_cond_tensor.to(device)
-            
-            #Forward pass only
-            test_output = network(test_sm_tensor,
-                                 test_cond_tensor)
-            test_loss_size = loss_func(test_output, test_target)
-            total_test_loss += float(test_loss_size.item())
-            
-            test_loss = total_test_loss / len(test_loader)
-
-    return test_loss, current_best_state_dict
+#     return test_loss, current_best_state_dict
 
 # def end2end_locked_workflow(open_param_dict,
 #                             sm_file_directory,

@@ -40,7 +40,7 @@ def full_evaluation_of_trained_network(sm_file_directory,
     A top-level function that takes a trained network, and does the final evaluation between that trained network
     and a simple averaging of extractions, as well as the persistence of the starting material.
     During training and dataset generation, ions are sorted according to their properties (are the newly 'appearing'
-    in the fraction, or 'persistent') and plotting should also maintain this sorting
+    in the fraction, or 'persistent') and plotting can also maintain this sorting if desired
 
     Parameters
     ----------
@@ -421,80 +421,4 @@ def calculate_ml_error(training_dataset,
             stacked_plot_lists[test_file][ion_type].append([CTD.formula_to_mass(current_ion), predicted_ion_value, actual_ion_value, ppe])
     
     return ordered_pred, ordered_act, per_point_error, stacked_plot_lists
-    
-def calculate_neighbor_point(network,
-                             neighbor_dataset,
-                             target_file_label,
-                             target_ext_conditions,
-                             target_ion,
-                             num_neighbors):
-    """
-    A function that takes a trained network and calculates the predicted value of
-    any given extraction point based 
-
-    Parameters
-    ----------
-    network : TYPE
-        DESCRIPTION.
-    neighbor_dataset : TYPE
-        DESCRIPTION.
-    target_file_label : TYPE
-        DESCRIPTION.
-    target_ext_conditions : list
-        A 6 entry list that contains the extraction solvent information for the test file
-    target_ion : TYPE
-        DESCRIPTION.
-    num_neighbors : integer
-        The number of nearest neighbors to use to produce a predicted extraction value
-
-    Returns
-    -------
-    None.
-
-    """    
-    
-    expanded_condition_dict = dict(neighbor_dataset.rectified_condition_dict)
-    expanded_condition_dict[target_file_label] = target_ext_conditions
-    
-    test_neighbor_tensor = CUD.create_neighbor_tensor(target_file_label=target_file_label,
-                                                      formula_tuple=target_ion,
-                                                      condition_dict=expanded_condition_dict,
-                                                      file_processing_list=neighbor_dataset.file_processing_list)
-    test_neighbor_tensor = test_neighbor_tensor.unsqueeze(0)
-    
-    if torch.cuda.is_available() == True:
-        device = 'cuda'
-        if torch.cuda.device_count() > 1:
-            print('Multiple GPU Detected')
-            network = nn.DataParallel(network)
-    elif torch.backends.mps.is_available() == True:
-        device = 'mps'
-    else:
-        raise ValueError('No GPU available')
-    
-    network.to(device)
-    test_neighbor_tensor.to(device)
-    
-    neighbor_prediction = network(test_neighbor_tensor).tolist()[0]
-    
-    seq = sorted(neighbor_prediction)
-    ranks = [seq.index(val) for val in neighbor_prediction]
-    
-    target_list = [1 if rank <= (num_neighbors - 1) else 0 for rank in ranks]
-    
-    running_sum = 0.0
-    
-    for file, rank in zip(neighbor_dataset.file_processing_list, target_list):
-        if rank == 1:
-            try:
-                neighbor_val = neighbor_dataset.training_dict[file][2][target_ion]    
-            except:
-                neighbor_val = 0.0
-            running_sum = running_sum + neighbor_val
-    
-    actual_sum = running_sum / num_neighbors
-    
-    return actual_sum
-
-    
-    
+       

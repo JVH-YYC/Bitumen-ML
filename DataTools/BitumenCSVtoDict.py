@@ -399,7 +399,6 @@ def print_full_sm_set_size(csv_file_directory,
     
     print('Size of total ion set is:', len(ion_set))
 
-
 def open_sum_training_dict(sm_file_directory,
                            ext_file_directory,
                            label_keys,
@@ -599,5 +598,4 @@ condition_dict = {'L1_SM': [0, 0, 0, 0, 0, 0],
                   '19241': [0.170, 0, 0, 0.830, 0, 0],
                   '19242': [0.350, 0, 0, 0, 0.650, 0],
                   '19243': [0.250, 0, 0, 0, 0.750, 0]}
-    
     

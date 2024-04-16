@@ -213,6 +213,7 @@ def expand_extraction_tis_dataset(dataset_dict,
                                   normalization_tuple):
     """
     An intermediate function that expands the getitem_list to include tensors necessary for the FCNet.
+    This makes training loops much more efficient rather than creating tensors on the fly.
 
     Parameters
     ----------
@@ -221,18 +222,24 @@ def expand_extraction_tis_dataset(dataset_dict,
         .csv files of MS data. Each key points to a dictionary, which has tuple keys of
         the form (#C, #H, #N, #O, #S). Those keys have a single entry,
         the normalized MS intensity of the peak corresponding to that formula.
-    getitem_list : TYPE
-        DESCRIPTION.
-    rectified_condition_dict : TYPE
-        DESCRIPTION.
-    additional_formula_list : TYPE
-        DESCRIPTION.
-    normalization_tuple : TYPE
-        DESCRIPTION.
+    getitem_list : list of tuples
+        A list of tuples as created in the functions above, that will hold the correct
+        dictionary keys for looking up the mass spec intensity
+    rectified_condition_dict : dictionary
+        A dictionary containing a link between the extraction filename (key) and a barcode
+        that indicates the solvent blend used in extraction
+    additional_formula_list : list of tuples
+        A list of tuples that contains the additional formula modifications that are to be
+        looked up in the starting material HRMS, and included in the tensor
+    normalization_tuple : tuple
+        A normalization tuple generated during the creation of the dataset, that contains
+        values for C/H/N/O/S to normalize the given input formula
 
     Returns
     -------
-    None.
+    An expanded version of the input getitem_list, with the new entries being a tensor than includes
+    information about related formulae, the starting material intensity, and the extraction conditions,
+    and the target ion value as a tensor
 
     """
 
@@ -258,127 +265,6 @@ def expand_extraction_tis_dataset(dataset_dict,
         
     return expanded_getitem_list
     
-    
-def create_neighbor_set_via_tis(dataset_dict,
-                                total_ion_set,
-                                output_name):
-    """
-    Essentially identical to create_extraction_set_via_tis above, just with a different
-    position in the dataset_dict for reading the ions.
-    During the creation of the dataset, the order in which training files was read is
-    locked into the file_processing_list, which is critical for further functions.    
-
-    Parameters
-    ----------
-    dataset_dict : dictionary
-        A dictionary of dictionaries. The top level keys are file names of the original
-        .csv files of MS data. Each key points to a dictionary, which has tuple keys of
-        the form (#C, #H, #N, #O, #S). Those keys have a single entry,
-        the normalized MS intensity of the peak corresponding to that formula.
-    total_ion_set : set
-        A set that contains all observed tuples in the entire training set
-    normalization_tuple : tuple of tuples
-        Of the format ((min #C, max #C), (min #H, max #H), etc.)
-    output_name : string
-        A string that will become the leading part of the filename for the
-        total_ion_dictionary, and will be appended with '_total_ion_dict.pkl'
-
-    Returns
-    -------
-    The getitem_list that will be used for training (after expansion), 
-    the observed ion dictionary and the file_processing_list. 
-
-    """
-
-    getitem_list = []
-    observed_ion_dict = {}
-    file_processing_list = []
-    
-    for file_key in dataset_dict.keys():
-        observed_tuples = set()
-        if 'SM' not in dataset_dict[file_key][0]:
-            file_processing_list.append(file_key)
-            curr_sm_label = dataset_dict[file_key][0] + '_SM'
-            #Inefficient loop over file names, but there are currently never more than 50. Figure out
-            #how to do better if nececssary in future
-            for try_top_level in dataset_dict.keys():
-                if curr_sm_label in try_top_level:
-                    sm_location = try_top_level
-  
-            for possible_ion in total_ion_set:
-                if possible_ion in dataset_dict[file_key][2].keys():
-                    observed_tuples.add(possible_ion)
-                    if possible_ion in dataset_dict[sm_location][2].keys():
-                        getitem_list.append((file_key, dataset_dict[file_key][0], possible_ion, 'per'))
-                    else:
-                        getitem_list.append((file_key, dataset_dict[file_key][0], possible_ion, 'app'))
-                else:
-                    if possible_ion in dataset_dict[sm_location][2].keys():
-                        getitem_list.append((file_key, dataset_dict[file_key][0], possible_ion, 'dis'))
-                    else:
-                        getitem_list.append((file_key, dataset_dict[file_key][0], possible_ion, 'oth'))
-                        
-            observed_ion_dict[file_key] = observed_tuples
-
-    file_list_string = output_name + '_file_processing_list.pkl'
-    pickle_file = open(file_list_string, 'wb')
-    pickle.dump(file_processing_list, pickle_file)
-    pickle_file.close()
-
-    return getitem_list, file_processing_list, observed_ion_dict
-
-def create_neighbor_test_via_tis(training_dict,
-                                 test_dict,
-                                 total_ion_set):
-    """
-    A function that creates the test __getitem__ list along with the test targets for
-    the learned-nearest-neighbor approach
-
-    Parameters
-    ----------
-    training_dict : TYPE
-        DESCRIPTION.
-    test_dict : TYPE
-        DESCRIPTION.
-    total_ion_set : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    None.
-
-    """
-
-    getitem_list = []
-    test_targets = []
-    test_file_list = []
-    
-    for test_file in test_dict.keys():
-        test_file_list.append(test_file)
-        curr_sm_label = test_dict[test_file][0] + '_SM'
-        for try_top_level in training_dict.keys():
-            if curr_sm_label in try_top_level:
-                sm_location = try_top_level
-        
-        for possible_ion in total_ion_set:
-            if possible_ion in test_dict[test_file][2].keys():
-                if possible_ion in training_dict[sm_location][2].keys():
-                    getitem_list.append((test_file, test_dict[test_file][0], possible_ion, 'per'))
-                    test_targets.append(test_dict[test_file][2][possible_ion])
-                else:
-                    getitem_list.append((test_file, test_dict[test_file][0], possible_ion, 'app'))
-                    test_targets.append(test_dict[test_file][2][possible_ion])
-            else:
-                if possible_ion in training_dict[sm_location][2].keys():
-                    getitem_list.append((test_file, test_dict[test_file][0], possible_ion, 'dis'))
-                    test_targets.append(0.0)
-                else:
-                    getitem_list.append((test_file, test_dict[test_file][0], possible_ion, 'oth'))
-                    test_targets.append(0.0)
-    
-    return getitem_list, test_targets, test_file_list
-    
-
 def enumerate_extraction_dataset(training_dict,
                                  output_name):
     """
@@ -399,7 +285,6 @@ def enumerate_extraction_dataset(training_dict,
     simulate real world situation. Can't just predict observed peaks - this requires knowledge of
     result ahead of time. Can't predict all 'possible' ions, as what does that mean? Can only
     predict all previously observed ions in training set.
-    
 
     Parameters
     ----------
@@ -459,220 +344,6 @@ def enumerate_extraction_dataset(training_dict,
         
     return getitem_list, observed_ion_dict, total_ion_list
 
-def enumerate_neighbor_dataset(dataset_dict,
-                               output_name):
-    """
-    A function that takes a training neighbor dataset dictionary (created in CSVtoDict),
-    and generates a full length list of tuples: where each tuple is a
-    (filename, SM label, formula_tuple, ion_type) series. Pytorch itemgetter will use these pairs
-    to look up the given normalized mass spec intensity from the training dictionary
-    
-    There are 4 distinct kinds of 'ion_type'. There are ions that are present in both
-    the starting material, and an extracted fraction that are labelled 'per' for persistent.
-    There are some ions that appear in an extracted fraction, but not in the starting fraction
-    that are labelled as 'app' for appear. Some ions from the starting material do not appear
-    in the extracted fraction, and are labelled as 'dis' for disappear. If the file being processed
-    is a starting material file itself, these ions are ignored as they are never predicted in
-    the desired process - SM information is always available before extraction, no need to predict.
-
-    For cross-validation/testing the identity of all unique ions identified *must* be recorded to
-    simulate real world situation. Can't just predict observed peaks - this requires knowledge of
-    result ahead of time. Can't predict all 'possible' ions, as what does that mean? Can only
-    predict all previously observed ions in training set.
-    
-    Neural networks based on this approach are also *completely* sensitive to the order in
-    which the tensors are constructed - also pickle an ordered list of file names - for testing,
-    neighbors must also be constructed in exactly this order.
-    
-
-    Parameters
-    ----------
-    dataset_dict : dictionary
-        A dictionary of dictionaries. The top level keys are file names of the original
-        .csv files of MS data. Each key points to a dictionary, which has tuple keys of
-        the form (#C, #H, #N, #O, #S). Those keys have a single entry,
-        the normalized MS intensity of the peak corresponding to that formula.
-    output_name : dictionary
-        A leading string that will be used to stamp the two pickled output files,
-        containing the observed ion dictionary (a per-file dictionary) and the total ion list
-
-    Returns
-    -------
-    An organized lists of tuples. The first tuple entry has the filename
-    dictionary key; the second has the tuple dictionary key; these will allow
-    the mass spec intensity to be returned when looked up with the previous
-    two keys.
-    
-    Also returns a dictionary that has descriptions of which ions are observed per file, and in total.
-
-    """
-    
-    getitem_list = []
-    observed_ion_dict = {}
-    total_ion_list = []
-    file_processing_list = []
-    
-    for file_key in dataset_dict.keys():
-        observed_tuples = []
-        if 'SM' not in dataset_dict[file_key][0]:
-            file_processing_list.append(file_key)
-            curr_sm_label = dataset_dict[file_key][0] + '_SM'
-            #Inefficient loop over file names, but there are currently never more than 50. Figure out
-            #how to do better if nececssary in future
-            for try_top_level in dataset_dict.keys():
-                if curr_sm_label in try_top_level:
-                    sm_location = try_top_level
-                    
-            #Create per and app ion types
-            for tuple_key in dataset_dict[file_key][2].keys():
-                if tuple_key in dataset_dict[sm_location][2].keys():
-                    getitem_list.append((file_key, dataset_dict[file_key][0], tuple_key, 'per'))
-                else:
-                    getitem_list.append((file_key, dataset_dict[file_key][0], tuple_key, 'app'))
-                if tuple_key not in observed_tuples:
-                    observed_tuples.append(tuple_key)
-                if tuple_key not in total_ion_list:
-                    total_ion_list.append(tuple_key)
-
-            #Single pass through SM file to create 'dis' ion types
-            for sm_tuple_key in dataset_dict[sm_location][2].keys():
-                if sm_tuple_key not in observed_tuples:
-                    getitem_list.append((file_key, dataset_dict[file_key][0], sm_tuple_key, 'dis'))
-                if sm_tuple_key not in total_ion_list:
-                    total_ion_list.append(sm_tuple_key)
-                    
-            observed_ion_dict[file_key] = observed_tuples
-                                    
-    return getitem_list, file_processing_list, observed_ion_dict, total_ion_list
-
-def expand_neighbor_getitem(dataset_dict,
-                            getitem_list,
-                            rectified_condition_dict,
-                            file_processing_list,
-                            normalization_tuple,
-                            num_neighbors,
-                            training_style,
-                            identity_strategy):
-    """
-    The above enumerate_neighbor_dataset is based on previous dataset creation methods,
-    and was kept so that other analysis tools could be used. For this more complex
-    data presentation, it will be important not to be constantly querying the dataset.
-    This function will expand the getitem list to include both the training tensor
-    and the training target.
-    The size of the tensors and the weighting of the target depends on the
-    number of desired neighbors.
-
-    Needs a helper file that rectifies the file_processing_list and condition_dict such that
-    functions further down don't need to loop over the condition dictionary multiple times
-
-    Parameters
-    ----------
-    training_dict : TYPE
-        DESCRIPTION.
-    getitem_list : TYPE
-        DESCRIPTION
-    condition_dict :
-        
-    file_processing_list : list
-        An ordered list of (training) files for consistent tensor generation
-    num_neighbors : integer
-        Number of nearest neighbors to consider
-    training_style : string
-        If 'absolute' is used, then the dataset is looking to *minimize* the predicted variance
-        between a given point and a given neighbor - as opposed to the normal training, where we
-        are trying to *maximize* the chances that a given neighbor is the most accurate.
-    
-    Returns
-    -------
-    An expanded version of the getitem_list from above, with the new entries being
-    a Pytorch tensor, as well as a target with a length identical to the number of
-    files in the training set, for cross-entropy loss target
-
-    """
-
-    expanded_getitem_list = []
-    
-    if training_style != 'absolute':
-        for list_entry in getitem_list:
-            entry_filename = list_entry[0]
-            entry_formula_tuple = list_entry[2]
-            target_tensor = create_neighbor_target(entry_filename,
-                                                   entry_formula_tuple,
-                                                   dataset_dict,
-                                                   file_processing_list,
-                                                   num_neighbors)
-            neighbor_tensor = create_neighbor_tensor(entry_filename,
-                                                     entry_formula_tuple,
-                                                     rectified_condition_dict,
-                                                     file_processing_list,
-                                                     normalization_tuple,
-                                                     identity_strategy)
-            expanded_getitem_list.append((list_entry[0], list_entry[1], list_entry[2], list_entry[3], neighbor_tensor, target_tensor))
-    else:
-        for list_entry in getitem_list:
-            entry_filename = list_entry[0]
-            entry_formula_tuple = list_entry[2]
-            target_tensor = create_absolute_neighbor_target(entry_filename,
-                                                            entry_formula_tuple,
-                                                            dataset_dict,
-                                                            file_processing_list,
-                                                            identity_strategy)
-            
-            neighbor_tensor = create_neighbor_tensor(entry_filename,
-                                                     entry_formula_tuple,
-                                                     rectified_condition_dict,
-                                                     file_processing_list,
-                                                     normalization_tuple,
-                                                     identity_strategy)
-
-            expanded_getitem_list.append((list_entry[0], list_entry[1], list_entry[2], list_entry[3], neighbor_tensor, target_tensor))
-
-        
-    return expanded_getitem_list
-
-def expand_neighbor_test_getitem(training_dict,
-                                 test_getitem_list,
-                                 rectified_condition_dict,
-                                 file_processing_list,
-                                 normalization_tuple,
-                                 identity_strategy):
-    """
-    
-
-    Parameters
-    ----------
-    training_dict : TYPE
-        DESCRIPTION.
-    test_getitem_list : TYPE
-        DESCRIPTION.
-    condition_dict : TYPE
-        DESCRIPTION.
-    file_processing_list : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    None.
-
-    """
-
-    expanded_test_getitem_list = []
-
-    for list_entry in test_getitem_list:
-        entry_filename = list_entry[0]
-        entry_formula_tuple = list_entry[2]
-        
-        neighbor_tensor = create_neighbor_tensor(entry_filename,
-                                                 entry_formula_tuple,
-                                                 rectified_condition_dict,
-                                                 file_processing_list,
-                                                 normalization_tuple,
-                                                 identity_strategy)
-    
-        expanded_test_getitem_list.append((list_entry[0], list_entry[1], list_entry[2], list_entry[3], neighbor_tensor))
-    
-    return expanded_test_getitem_list
-
 def rectify_condition_dict(condition_dictionary,
                            file_processing_lists):
     """
@@ -682,10 +353,10 @@ def rectify_condition_dict(condition_dictionary,
 
     Parameters
     ----------
-    condition_dictionary : TYPE
-        DESCRIPTION.
-    file_processing_list : TYPE
-        DESCRIPTION.
+    condition_dictionary : dictionary
+        A dictionary that connects the extraction file names to the solvent blend used in the experiment
+    file_processing_list : list
+        A list of extraction files being considered in the current dataset
 
     Returns
     -------
