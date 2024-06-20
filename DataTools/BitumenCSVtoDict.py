@@ -300,7 +300,7 @@ def formula_to_mass(formula_tuple):
     Parameters
     ----------
     formula_tuple : tuple
-        Tuple of the precise formula (#C, #H, #N, #O, #S, #Cl, #Na)
+        Tuple of the precise formula (#C, #H, #N, #O, #S)
 
     Returns
     -------
@@ -315,7 +315,32 @@ def formula_to_mass(formula_tuple):
                   (formula_tuple[4] * 31.972072))
     
     return exact_mass
-                                        
+
+def nominal_kendrick_mass(formula_tuple):
+    """
+    A function that converts a formula tuple back into a nominal mass,
+    useful for KMD calculations according to Mass. Spec. Rev. 2009,
+    28, 121-134.
+
+    Parameters
+    ----------
+    formula_tuple : tuple
+        Tuple of the precise formula (#C, #H, #N, #O, #S)
+
+    Returns
+    -------
+    A float value - the molecular mass of the given formula
+
+    """
+    
+    nkm = ((formula_tuple[0] * 12) +
+           (formula_tuple[1] * 1) +
+           (formula_tuple[2] * 14) +
+           (formula_tuple[3] * 16) +
+           (formula_tuple[4] * 32))
+    
+    return nkm
+
 #### -----------------
 #### Open-Ended dictionaries
 #### -----------------     
