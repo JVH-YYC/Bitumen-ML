@@ -169,7 +169,28 @@ def define_sm_ext_test(sm_file_directory,
                 key_string_list.append([label_keys[specific_key], specific_file])
         
     return key_string_list
-   
+
+def define_dom_set(dom_file_directory,
+                   holdout_list):
+    """
+    Creates a list of .csv files that are associated with DOM MS
+    List structure is simpler, as there is no extraction taking place in
+    this dataset.
+    Returns a list of .csv files to be processed.
+    """
+
+    holdout_strings = [(dom_file_directory + '/' + x) for x in holdout_list]
+
+    dom_path = Path('.', dom_file_directory)
+
+    dom_csv_list = list(dom_path.glob('*.csv'))
+
+    dom_str_list = [str(x) for x in dom_csv_list]
+
+    final_dom_list = [x for x in dom_str_list if x not in holdout_strings]
+
+    return final_dom_list
+
 def load_from_list_nar(csv_name_incl_dir):
     """
     A function that loads .csv files that already include the directory name,
@@ -385,7 +406,81 @@ def single_sum_dict(mass_spec_frame):
             ms_dict[formula_tuple] = (current_row['Total'] / normalization_sum) * 1000
         
     return ms_dict
+
+def single_dom_dict(mass_spec_frame,
+                    log_int=False):
+    """
+    A function that creates a dictionary from a DOM MS .csv file, with keys that
+    are tuples of the usual form (#C, #H, #N, #O, #S), each holding
+    a single entry: the normalized intensity of the peak observed.
     
+    No MW cutoff for this function as a starting point for DOM analysis
+    
+    No normalization necessary, as that was done by the original authors
+
+    Parameters
+
+    mass_spec_frame : pandas Dataframe
+        Dataframe of MS results that has been stripped down to only rows that
+        contain actual molecular formulae
+    
+    log_int: boolean
+        If True, log(10) value of intensity is used. May be necessary to stabilize DOM
+        dataset - much more sensitive to CV splits that bitumen was.
+
+    Returns
+    -------
+    A dictionary of MS intensities for a single file
+    """
+
+    mass_spec_frame['Mono Inty'] = pd.to_numeric(mass_spec_frame['Mono Inty'])
+    mass_spec_frame = mass_spec_frame.set_index('Formula')
+
+    ms_dict = {}
+
+    if log_int == False:
+        for formula, current_row in mass_spec_frame.iterrows():
+            formula_tuple = formula_to_tuple(formula)
+            ms_dict[formula_tuple] = current_row['Mono Inty']
+    else:
+        for formula, current_row in mass_spec_frame.iterrows():
+            formula_tuple = formula_to_tuple(formula)
+            ms_dict[formula_tuple] = np.log10(current_row['Mono Inty'])
+    
+    return ms_dict
+
+def create_full_dom_dict(dom_file_directory,
+                         holdout_list):
+    
+    """
+    A function that creates a dictionary for all .csv files in a directory, with
+    top-level keys being the file name, which points to a single dictionary
+    created by single_dom_dict function.
+
+    Parameters
+    ----------
+    dom_file_directory : string
+        Name of directory containing DOM .csv files
+    holdout_list : list
+        Name of MS .csv files that are held out of dataset
+
+    Returns
+    -------
+    A dictionary of dictionaries for DOM MS data
+
+    """
+    dom_ms_list = define_dom_set(dom_file_directory,
+                                    holdout_list)
+    
+    key_ms_dict = {}
+
+    for file in dom_ms_list:
+        mass_spec_frame = load_from_list_nar(file)
+        curr_dict = single_dom_dict(mass_spec_frame)
+        key_ms_dict[file] = curr_dict
+
+    return key_ms_dict
+
 def print_single_file_size(csv_file_directory,
                            csv_file_name):
     """

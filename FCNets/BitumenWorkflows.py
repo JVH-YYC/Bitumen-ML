@@ -32,13 +32,17 @@ def train_and_test_single_fig(network,
                               lr_patience,
                               es_patience,
                               training_epochs,
-                              batch_size):
+                              batch_size,
+                              cv_call=None):
     """
     
     A function for performing a single (full) training and testing cycle for
     measuring the 'formula information level' of a given formula.
     
     The network and dataset are constructed elsewhere for efficiency
+
+    For DOM, an additional feature was added to the Dataset, which constructs
+    and saves self.cv_idx, a list of indices that can be used for cross-validation
     
     Parameters
     ----------
@@ -69,6 +73,9 @@ def train_and_test_single_fig(network,
         The maximum number of training epochs allowed
     batch_size : integer
         Batch size for network training
+    cv_call : integer or None
+        If an integer is provided, then that is the position of the CV currently being tested
+        If 'None', the training/testing cycle is not part of a CV split
 
     Returns
     -------
@@ -77,41 +84,79 @@ def train_and_test_single_fig(network,
     so that violin plots can be made) as well as a singular test error for ranking during optimization
 
     """
-    
-    train_index, val_index, test_index = BFN.test_train_val_split(train_dataset,
-                                                                  val_split,
-                                                                  test_split)
+    if cv_call is None:
+        train_index, val_index, test_index = BFN.test_train_val_split(train_dataset,
+                                                                    val_split,
+                                                                    test_split)
 
-    train_sample = SubsetRandomSampler(train_index)
-    train_loader = torch.utils.data.DataLoader(train_dataset,
-                                               batch_size=batch_size,
-                                               sampler=train_sample)
-    
-    val_sample = SubsetRandomSampler(val_index)
-    val_loader = torch.utils.data.DataLoader(train_dataset,
-                                             batch_size=batch_size,
-                                             sampler=val_sample)
-    
-    if test_dataset is None:
-        try:
+        train_sample = SubsetRandomSampler(train_index)
+        train_loader = torch.utils.data.DataLoader(train_dataset,
+                                                batch_size=batch_size,
+                                                sampler=train_sample)
+        
+        val_sample = SubsetRandomSampler(val_index)
+        val_loader = torch.utils.data.DataLoader(train_dataset,
+                                                batch_size=batch_size,
+                                                sampler=val_sample)
+        
+        if test_dataset is None:
+            try:
+                test_sample = SubsetRandomSampler(test_index)
+                test_loader = torch.utils.data.DataLoader(train_dataset,
+                                                        batch_size=batch_size,
+                                                        sampler=test_sample)
+            except:
+                raise ValueError('test_split and test_dataset not properly matched for training loop')
+
+        else:
+            test_index = list(range(test_dataset.__len__()))
             test_sample = SubsetRandomSampler(test_index)
             test_loader = torch.utils.data.DataLoader(train_dataset,
-                                                      batch_size=batch_size,
-                                                      sampler=test_sample)
-        except:
-            raise ValueError('test_split and test_dataset not properly matched for training loop')
+                                                    batch_size=batch_size,
+                                                    sampler=test_sample)
 
     else:
-        test_index = list(range(test_dataset.__len__()))
+        # Using CV splits
+        test_index = train_dataset.cv_splits[cv_call]
+
+        remaining_splits = [s for i, s in enumerate(train_dataset.cv_splits) if i != cv_call]
+        combined_indices = [idx for split in remaining_splits for idx in split]
+        random.shuffle(combined_indices)
+
+        print('Len test_index and entry[0]', len(test_index), test_index[0])
+        print('Len combined_incides and entry[0]', len(combined_indices), combined_indices[0])
+
+        num_test_samples = len(test_index)
+        val_index = combined_indices[:num_test_samples]
+        train_index = combined_indices[num_test_samples:]
+
+        train_sample = SubsetRandomSampler(train_index)
+        train_loader = torch.utils.data.DataLoader(train_dataset,
+                                  batch_size=batch_size,
+                                  sampler=train_sample)
+
+        val_sample = SubsetRandomSampler(val_index)
+        val_loader = torch.utils.data.DataLoader(train_dataset,
+                                batch_size=batch_size,
+                                sampler=val_sample)
+
         test_sample = SubsetRandomSampler(test_index)
         test_loader = torch.utils.data.DataLoader(train_dataset,
-                                                  batch_size=batch_size,
-                                                  sampler=test_sample)
-
+                                 batch_size=batch_size,
+                                 sampler=test_sample)   
+        
     num_batches = len(train_loader)
+
+    if hasattr(train_dataset, 'log_int') == True:
+        dom_dataset = True
+    else:
+        dom_dataset = False
+
+
     loss_func, optimize, lr_sched = BFN.loss_and_optim(network,
                                                        learning_rate,
-                                                       lr_patience)
+                                                       lr_patience,
+                                                       dom_dataset)
 
     training_start = time.time()
 
@@ -476,6 +521,169 @@ def measure_all_fig_levels(sm_file_directory,
     
     return return_frame
 
+def measure_fig_levels_dom(dom_file_directory,
+                           open_param_dict,
+                           holdout_list,
+                           possible_formula_list,
+                           number_repeat,
+                           csv_output_name,
+                           val_split,
+                           test_split,
+                           training_epochs,
+                           batch_size,
+                           learning_rate,
+                           lr_patience,
+                           es_patience,
+                           cv_splits=5,
+                           log_int=False):
+    """
+    Created during revisions (#1) to manuscript. Looking at new dissolved organic matter dataset,
+    using optimized set-up discovered from bitumen. Therefore, fewer variables needed.
+
+    One big difference: there is no extraction, so there is no starting material corresponding
+    to each DOM FT-MS dataset. Therefore, this will require the creation of new dictionary
+    structures and slightly different processing.
+
+    If CV splits are not intended, one can set the value to 1, or use 'None' to skip the CV
+
+    Parameters
+    ----------
+    dom_file_directory : string
+        Name of sub-directory that contains DOM FT-MS files
+    open_param_dict : dictionary
+        A dictionary that contains the necessary description to create a fully connected NN
+    holdout_list : list
+        Name of files that should be excluded from creation of the training dataset
+    possible_formula_list : list of tuples
+        A list of formula that will be evaluated individually in this workflow
+    number_repeat : integer
+        The number of times the training will be repeated/averaged per formula
+    csv_output_name : string
+        A leading string that will be added to all .csv output files
+    val_split : float
+        The fraction of MS peaks that will be used for validation
+    test_split : float
+        The fraction of MS peaks that will be used for final testing
+    training_epochs : integer
+        Maximum number of training epochs that will be used
+    batch_size : integer
+        Batch size for data loading
+    learning_rate : float
+        Initial learning rate used during ML training
+    lr_patience : integer
+        Number of training epochs with no improvement that will be allowed before learning rate is reduced
+    es_patience : integer
+        Number of training epochs with no improvement that will be allowed before early stopping is engaged
+    cv_splits : integer
+        Number of cross-validation splits to use for testing. If set to 'None', the CV will be skipped
+    log_int: boolean
+        If 'True', use the log(10) value of relative intensity for each MS peak
+            
+    Returns
+    -------
+    None, but saves results as .csv files
+
+    """
+
+    #Create duplicate CV number for call below
+    if cv_splits is None:
+        act_cv = 1
+    else:
+        act_cv = cv_splits
+
+    #Create starting dataframe that will be grown by appending results
+    return_frame = pd.DataFrame(columns=possible_formula_list)
+    
+    #Gather list of .csv files to process
+    file_process_list = CTD.define_dom_set(dom_file_directory,
+                                           holdout_list)
+    
+    full_list_of_labels = []
+
+    for current_file in file_process_list:
+        full_list_of_labels.append(current_file)
+
+    for current_file in full_list_of_labels:
+        #Create individual Dataset object for single file
+        print('Processing:', current_file)
+        curr_holdout_list = [x.split('/')[-1] for x in full_list_of_labels if current_file != x]
+        
+        curr_dataset = BFN.DOMFIGDataset(dom_file_directory,
+                                         holdout_list,
+                                         cv_splits,
+                                         log_int)
+        
+        print('Full set size is:', len(curr_dataset))
+        curr_file_losses = []
+    
+        for possible_formula in possible_formula_list:
+            print('Attaching:', possible_formula)
+            average_loss_list = []
+            
+            BFN.update_formula(curr_dataset,
+                               possible_formula,
+                               locked_formula=None)
+            starting_net_width = 7
+            
+            for iteration in range(number_repeat):
+                for curr_cv in range(act_cv):
+                    #Create fresh network
+                    network = BFN.FIGNet(open_param_dict['num_layers'],
+                                        starting_net_width,
+                                        open_param_dict['strategy'],
+                                        open_param_dict['batch_norm'],
+                                        open_param_dict['softmax'],
+                                        open_param_dict['activation'],
+                                        open_param_dict['dropout'])
+                    
+                    if cv_splits is None:
+                        performance_dict, curr_best_state_dict = train_and_test_single_fig(network,
+                                                                                        curr_dataset,
+                                                                                        None,
+                                                                                        val_split,
+                                                                                        test_split,
+                                                                                        learning_rate,
+                                                                                        lr_patience,
+                                                                                        es_patience,
+                                                                                        training_epochs,
+                                                                                        batch_size,
+                                                                                        None)
+                    else:    
+                        performance_dict, curr_best_state_dict = train_and_test_single_fig(network,
+                                                                                        curr_dataset,
+                                                                                        None,
+                                                                                        val_split,
+                                                                                        test_split,
+                                                                                        learning_rate,
+                                                                                        lr_patience,
+                                                                                        es_patience,
+                                                                                        training_epochs,
+                                                                                        batch_size,
+                                                                                        curr_cv)
+                    
+                    average_loss_list.append(performance_dict['test_loss'])
+                
+            this_formula_loss = sum(average_loss_list) / len(average_loss_list)
+            curr_file_losses.append(this_formula_loss)
+            
+        curr_frame = pd.DataFrame(data=[curr_file_losses],
+                                  index=[current_file],
+                                  columns=possible_formula_list)
+        
+        #Save intermediate .csv, in case of cluter time-out or other issues
+        cf_save_string = csv_output_name + '_' + str(current_file) + '.csv'
+        cf_save_string = cf_save_string.replace('/', '_')
+        curr_frame.to_csv(cf_save_string)
+        
+        
+        return_frame = return_frame.append(curr_frame)
+    
+    #If processing hasn't timed-out, return full frame
+    return_string = csv_output_name + '_FULL.csv'
+    return_frame.to_csv(return_string)
+    
+    return return_frame
+
 def train_and_test_single_extraction_batch(network,
                                            train_dataset,
                                            test_dataset,
@@ -563,9 +771,15 @@ def train_and_test_single_extraction_batch(network,
     num_batches = len(train_loader)
     print('Num batches is:', num_batches)
 
+    if hasattr(train_dataset, 'log_int') == True:
+        dom_dataset = True
+    else:
+        dom_dataset = False
+
     loss_func, optimize, lr_sched = BFN.loss_and_optim(network,
                                                        learning_rate,
-                                                       lr_patience)
+                                                       lr_patience,
+                                                       dom_dataset)
 
     training_start = time.time()
 
@@ -867,9 +1081,15 @@ def train_and_test_single_tis_extraction(network,
 
     num_batches = len(train_loader)
 
+    if hasattr(train_dataset, 'log_int') == True:
+        dom_dataset = True
+    else:
+        dom_dataset = False
+
     loss_func, optimize, lr_sched = BFN.loss_and_optim(network,
                                                        learning_rate,
-                                                       lr_patience)
+                                                       lr_patience,
+                                                       dom_dataset)
 
     training_start = time.time()
 

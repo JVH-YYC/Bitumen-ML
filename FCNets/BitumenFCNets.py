@@ -27,6 +27,7 @@ import DataTools.BitumenCSVtoDict as CTD
 import numpy as np
 import os
 import pickle
+import random
 
 def ceildiv(a, b):
     """
@@ -637,7 +638,71 @@ class FIGTestData(Dataset):
 
     def return_curr_formula(self):
         return self.current_test_formula
+
+class DOMFIGDataset(Dataset):
+    def __init__(self,
+                 dom_file_directory,
+                 holdout_list,
+                 cv_splits=None,
+                 log_int=False):
+        """
+        Creates Pytorch Dataset object for MS training based on relationship between domain-expertise
+        identified MS formula adjustments. For dissolved organic matter dataset used in paper revisions.
+        """
+        self.dom_file_directory = dom_file_directory
+        self.holdout_list = holdout_list
+        self.cv_splits = cv_splits
+        self.log_int = log_int
+
+        self.dom_dictionary = CTD.create_full_dom_dict(dom_file_directory,
+                                                    holdout_list)
+        
+        self.dom_keys = CUD.enumerate_dom_fig_dataset(self.dom_dictionary)
+
+        self.locked_formula = None
+        self.current_test_formula = []
+
+        if self.cv_splits is not None:
+            self.cv_splits = self.create_cv_splits(cv_splits)
+        
+    def create_cv_splits(self,
+                            cv_splits):
+        indices = list(range(len(self.dom_keys)))
+        random.shuffle(indices)
+        split_size = len(indices) // cv_splits
+        splits = [indices[i * split_size: (i + 1) * split_size] for i in range(cv_splits)]
+
+            # If there are remaining indices, add them to the last split
+        if len(indices) % cv_splits != 0:
+            splits[-1].extend(indices[cv_splits * split_size:])
     
+        return splits
+    
+    def __len__(self):
+        return len(self.dom_keys)
+    
+    def __getitem__(self, idx):
+        top_level_key, sub_level_key = self.dom_keys[idx]
+        
+        active_dictionary = self.dom_dictionary[top_level_key]
+        
+        fig_example_tensor = CUD.create_dom_tensor(sub_level_key,
+                                                   active_dictionary,
+                                                   self.current_test_formula,
+                                                   self.log_int)
+
+        example_target = np.float32(active_dictionary[sub_level_key])
+                                
+        return fig_example_tensor, example_target
+
+    def set_test_formula(self,
+                           formula_list):
+        self.current_test_formula = formula_list
+        return
+
+    def return_curr_formula(self):
+        return self.current_test_formula
+
 class BitumenExtTrainingData(Dataset):
     def __init__(self,
                  sm_file_directory,
@@ -1042,7 +1107,8 @@ def test_train_val_split(dataset,
 
 def loss_and_optim(network,
                    learning_rate,
-                   lr_patience):
+                   lr_patience,
+                   dom_dataset):
     """
     Creates Pytorch loss function and optimizer
 
@@ -1054,26 +1120,41 @@ def loss_and_optim(network,
         Learning rate for training, typically around 0.0001 for adam optimizer
     lr_patience : integer
         Number of epoch with no improvement that are allowed before learning rate is updated.
-
+    dom_dataset : boolean
+        A check is performed to see if this is a DOM dataset, allows for using
+        different parameters without changing the function
+        
     Returns
     -------
     Loss function and optimizer.
 
     """
-    
-    loss_function = nn.MSELoss()
+    if dom_dataset == False:
+        loss_function = nn.MSELoss()
 
-    optimize = optim.Adam(network.parameters(),
-                          lr=learning_rate)
-    
-    lr_sched = optim.lr_scheduler.ReduceLROnPlateau(optimize,
-                                                    mode='min',
-                                                    factor=0.1,
-                                                    patience=lr_patience,
-                                                    threshold=0.0001,
-                                                    min_lr=(learning_rate / 10001),
-                                                    verbose=True)
-    
+        optimize = optim.Adam(network.parameters(),
+                            lr=learning_rate)
+        
+        lr_sched = optim.lr_scheduler.ReduceLROnPlateau(optimize,
+                                                        mode='min',
+                                                        factor=0.1,
+                                                        patience=lr_patience,
+                                                        threshold=0.0001,
+                                                        min_lr=(learning_rate / 10001),
+                                                        verbose=True)
+    else:
+        loss_function = nn.SmoothL1Loss(beta=1.0, reduction='mean')
+
+        optimize = optim.Adam(network.parameters(),
+                            lr=learning_rate)
+        
+        lr_sched = optim.lr_scheduler.ReduceLROnPlateau(optimize,
+                                                        mode='min',
+                                                        factor=0.1,
+                                                        patience=lr_patience,
+                                                        threshold=0.0001,
+                                                        min_lr=(learning_rate / 10001),
+                                                        verbose=True)
     return loss_function, optimize, lr_sched
 
 def multi_loss_and_optim(network,

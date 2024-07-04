@@ -554,6 +554,82 @@ def enumerate_fig_dataset(labelled_training_dict):
     
     return getitem_list
 
+def enumerate_dom_fig_dataset(dom_data_dict):
+
+    getitem_list = []
+
+    for file_key in dom_data_dict:
+        for tuple_key in dom_data_dict[file_key].keys():
+            getitem_list.append((file_key, tuple_key))
+    
+    return getitem_list
+
+def create_dom_tensor(target_formula,
+                      single_dom_dictionary,
+                      current_formula_adjustment,
+                      log_int=False):
+    """
+    A function that takes a target formula (which is also a dict key), as well as a formula
+    fragment that is currently being used in the analysis. It returns a pytorch tensor that
+    does not include the intensity of the target formula, only information from the target
+    formula +/- the fragment.
+
+    When the tensor is created, the target formula is the first 5 positions. Therefore, the formula of
+    all fragments is *implied* - as the formulae are not linearly independent, it could be harmful
+    to add multiple CHNOS values across the tensor.
+
+    Parameters
+    ----------
+    target_formula : tuple
+        A tuple of the usual formula for the unknown target ion (#C, #H, #N, #O, #S)
+    single_dom_dictionary : dictionary
+        A dictionary with keys = formula tuples, entries = relative MS intensity
+    current_formula_adjustment : list
+        A list of the fragment to add/subtract from the target formula
+    log_int : boolean
+        If 'false', raw relative intensity values were used, so if an ion is missing zero should be returned
+        If 'true', log10 of the intensity was used. Based on s/n threshhold, 0.01 rel intensity (ie -2 log10)
+        is reasonable.
+        
+    Returns
+    -------
+    A pytorch tensor of length 7 (5 elements, + value intensity, - value intensity)
+    """
+
+    starting_formula_array = np.asarray(target_formula)
+
+    running_return_array = np.asarray(target_formula)
+
+    #Both positive and negative FIG are included in list - don't need to both + and - for each fragment
+    if log_int == False:
+        for adjustment_fragment in current_formula_adjustment:
+            target_array = np.asarray(adjustment_fragment)
+            curr_formula_target = starting_formula_array + target_array
+            curr_formula_tuple = tuple(curr_formula_target)
+
+            if curr_formula_tuple not in single_dom_dictionary.keys():
+                running_return_array = np.append(running_return_array, 0.0)
+            else:
+                running_return_array = np.append(running_return_array, single_dom_dictionary[curr_formula_tuple])
+
+    if log_int == True:
+        for adjustment_fragment in current_formula_adjustment:
+            target_array = np.asarray(adjustment_fragment)
+            curr_formula_target = starting_formula_array + target_array
+            curr_formula_tuple = tuple(curr_formula_target)
+
+            if curr_formula_tuple not in single_dom_dictionary.keys():
+                running_return_array = np.append(running_return_array, -2.0)
+            else:
+                running_return_array = np.append(running_return_array, single_dom_dictionary[curr_formula_tuple])
+    
+    numpy_tensor = torch.from_numpy(running_return_array)
+
+    numpy_tensor = numpy_tensor.to(torch.float32)
+
+    return numpy_tensor
+
+
 def create_fig_tensor(target_formula,
                       single_experiment_dictionary,
                       current_formula_adjustments):
