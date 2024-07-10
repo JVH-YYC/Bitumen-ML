@@ -33,7 +33,8 @@ def train_and_test_single_fig(network,
                               es_patience,
                               training_epochs,
                               batch_size,
-                              cv_call=None):
+                              cv_call=None,
+                              use_gpu=True):
     """
     
     A function for performing a single (full) training and testing cycle for
@@ -175,22 +176,26 @@ def train_and_test_single_fig(network,
     best_val_loss = 1000.0
     current_patience = es_patience
 
-    if torch.cuda.is_available() == True:
-        device = torch.device('cuda')
-    elif not torch.backends.mps.is_available():
-        if not torch.backends.mps.is_built():
-            print("MPS not available because the current PyTorch install was not "
-                  "built with MPS enabled.")
+    if use_gpu == True:
+        if torch.cuda.is_available() == True:
+            device = torch.device('cuda')
+        elif not torch.backends.mps.is_available():
+            if not torch.backends.mps.is_built():
+                print("MPS not available because the current PyTorch install was not "
+                    "built with MPS enabled.")
+            else:
+                print("MPS not available because the current MacOS version is not 12.3+ "
+                    "and/or you do not have an MPS-enabled device on this machine.")
         else:
-            print("MPS not available because the current MacOS version is not 12.3+ "
-                  "and/or you do not have an MPS-enabled device on this machine.")
-    else:
-        device = torch.device("mps")
-        print('Using Apple MPS GPU')
+            device = torch.device("mps")
+            print('Using Apple MPS GPU')
 
-    if device == torch.device('cuda') and torch.cuda.device_count() > 1:
-        print('Multiple GPU Detected')
-        network = nn.DataParallel(network)
+        if device == torch.device('cuda') and torch.cuda.device_count() > 1:
+            print('Multiple GPU Detected')
+            network = nn.DataParallel(network)
+    else:
+        device = torch.device('cpu')
+        print('Using CPU')
 
     network.to(device)
     
@@ -535,7 +540,8 @@ def measure_fig_levels_dom(dom_file_directory,
                            lr_patience,
                            es_patience,
                            cv_splits=5,
-                           log_int=False):
+                           log_int=False,
+                           use_gpu=True):
     """
     Created during revisions (#1) to manuscript. Looking at new dissolved organic matter dataset,
     using optimized set-up discovered from bitumen. Therefore, fewer variables needed.
@@ -584,7 +590,6 @@ def measure_fig_levels_dom(dom_file_directory,
     None, but saves results as .csv files
 
     """
-
     #Create duplicate CV number for call below
     if cv_splits is None:
         act_cv = 1
@@ -602,20 +607,82 @@ def measure_fig_levels_dom(dom_file_directory,
 
     for current_file in file_process_list:
         full_list_of_labels.append(current_file)
-
+    
     for current_file in full_list_of_labels:
         #Create individual Dataset object for single file
         print('Processing:', current_file)
         curr_holdout_list = [x.split('/')[-1] for x in full_list_of_labels if current_file != x]
+        #Create check for dataset splits
+        check_proceed = False
+        check_loops = 0
         
-        curr_dataset = BFN.DOMFIGDataset(dom_file_directory,
-                                         holdout_list,
-                                         cv_splits,
-                                         log_int)
-        
+        while check_proceed == False and check_loops < 6:
+            curr_dataset = BFN.DOMFIGDataset(dom_file_directory,
+                                            curr_holdout_list,
+                                            cv_splits,
+                                            log_int)
+            print('Checking for acceptable split')
+            average_loss_list = []
+            BFN.update_formula(curr_dataset,
+                               (50,50,50,50,50),
+                               None)
+            starting_net_width = 7
+            
+            for curr_cv in range(act_cv):
+                #Create fresh network
+                network = BFN.FIGNet(open_param_dict['num_layers'],
+                                    starting_net_width,
+                                    open_param_dict['strategy'],
+                                    open_param_dict['batch_norm'],
+                                    open_param_dict['softmax'],
+                                    open_param_dict['activation'],
+                                    open_param_dict['dropout'])
+                
+                if cv_splits is None:
+                    performance_dict, curr_best_state_dict = train_and_test_single_fig(network,
+                                                                                    curr_dataset,
+                                                                                    None,
+                                                                                    val_split,
+                                                                                    test_split,
+                                                                                    learning_rate,
+                                                                                    lr_patience,
+                                                                                    es_patience,
+                                                                                    training_epochs,
+                                                                                    batch_size,
+                                                                                    None,
+                                                                                    use_gpu)
+                else:    
+                    performance_dict, curr_best_state_dict = train_and_test_single_fig(network,
+                                                                                    curr_dataset,
+                                                                                    None,
+                                                                                    val_split,
+                                                                                    test_split,
+                                                                                    learning_rate,
+                                                                                    lr_patience,
+                                                                                    es_patience,
+                                                                                    training_epochs,
+                                                                                    batch_size,
+                                                                                    curr_cv,
+                                                                                    use_gpu)
+                
+                average_loss_list.append(performance_dict['test_loss'])
+
+            this_formula_loss = sum(average_loss_list) / len(average_loss_list)
+            print('Average loss for split is:', this_formula_loss)
+
+            if this_formula_loss < 0.1:
+                print('Proceeding')
+                check_proceed = True
+            elif this_formula_loss > 0.1 and check_loops < 5:
+                check_loops += 1
+                print('Re-trying split')
+            else:
+                print('Proceeding after failure')
+                check_proceed = True
+
         print('Full set size is:', len(curr_dataset))
         curr_file_losses = []
-    
+
         for possible_formula in possible_formula_list:
             print('Attaching:', possible_formula)
             average_loss_list = []
@@ -647,7 +714,8 @@ def measure_fig_levels_dom(dom_file_directory,
                                                                                         es_patience,
                                                                                         training_epochs,
                                                                                         batch_size,
-                                                                                        None)
+                                                                                        None,
+                                                                                        use_gpu)
                     else:    
                         performance_dict, curr_best_state_dict = train_and_test_single_fig(network,
                                                                                         curr_dataset,
@@ -659,7 +727,8 @@ def measure_fig_levels_dom(dom_file_directory,
                                                                                         es_patience,
                                                                                         training_epochs,
                                                                                         batch_size,
-                                                                                        curr_cv)
+                                                                                        curr_cv,
+                                                                                        use_gpu)
                     
                     average_loss_list.append(performance_dict['test_loss'])
                 
